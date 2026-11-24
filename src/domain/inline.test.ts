@@ -68,6 +68,23 @@ describe('parseInline: what it does not let through', () => {
     expect(parseInline('<a href="javascript:alert(1)">click</a>')).toEqual([plain('click')])
   })
 
+  it('makes a link with a disguised javascript: address plain text', () => {
+    // Forms that the review tried: mixed case, a tab inside the scheme, a character reference.
+    for (const address of [
+      'JaVaScRiPt:alert(1)',
+      'java\tscript:alert(1)',
+      '&#106;avascript:alert(1)',
+    ]) {
+      expect(parseInline(`<a href="${address}">click</a>`)).toEqual([plain('click')])
+    }
+  })
+
+  it('makes a link inside an svg element nothing at all', () => {
+    expect(parseInline('a<svg><a xlink:href="javascript:alert(1)">x</a></svg>b')).toEqual([
+      plain('ab'),
+    ])
+  })
+
   it('makes a link with a data: address or with no address plain text', () => {
     expect(parseInline('<a href="data:text/html,x">a</a><a>b</a>')).toEqual([plain('ab')])
   })
