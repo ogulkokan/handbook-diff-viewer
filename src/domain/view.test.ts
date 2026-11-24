@@ -2,7 +2,13 @@ import { describe, expect, it } from 'vitest'
 
 import { diffDocuments, type ViewItem, type ViewNode } from './diff'
 import { v1, v2, v3 } from './fixtures'
-import { changeCounts, changesIn, describeChange, withoutFormattingChanges } from './view'
+import {
+  changeCounts,
+  changesIn,
+  describeChange,
+  foldUnchanged,
+  withoutFormattingChanges,
+} from './view'
 
 // Expected values: "Expected changes" in docs/SPEC.md and the order of the nodes in the data files.
 
@@ -121,5 +127,106 @@ describe('describeChange', () => {
     const change = comparison.changes.find((c) => c.nodeId === 'cl-sec-passwords')!
 
     expect(describeChange(comparison, change)).toEqual({ name: 'Passwords', context: 'Security' })
+  })
+})
+
+describe('foldUnchanged (D10)', () => {
+  const comparison = diffDocuments(v2, v3)
+  const counts = changeCounts(comparison.tree)
+  const tools = find(comparison.tree, 'sec-tools')!
+  const folded = foldUnchanged(tools.children, counts)
+
+  it('v2 to v3, sec-tools: keeps the 4 edited clauses on their own', () => {
+    // docs/SPEC.md: the status or the vendor of Grammarly, Claude, Zapier and Dropbox changes.
+    const shown = folded.flatMap((entry) => (entry.fold ? [] : [entry.item.node.id]))
+
+    expect(shown.sort()).toEqual([
+      'cl-tool-claude',
+      'cl-tool-dropbox',
+      'cl-tool-grammarly',
+      'cl-tool-zapier',
+    ])
+  })
+
+  it('v2 to v3, sec-tools: folds the 36 other clauses and loses none', () => {
+    // data/v3.json: sec-tools holds 40 clauses.
+    const inFolds = folded.flatMap((entry) => (entry.fold ? entry.items : []))
+
+    expect(inFolds).toHaveLength(36)
+    expect(tools.children).toHaveLength(40)
+  })
+
+  it('keeps the order of the list', () => {
+    const order = folded.flatMap((entry) =>
+      entry.fold ? entry.items.map((item) => item.node.id) : [entry.item.node.id],
+    )
+
+    expect(order).toEqual(tools.children.map((item) => item.node.id))
+  })
+
+  it('says in the label how many nodes a fold holds', () => {
+    // data/v3.json: the edited clauses are numbers 22, 24, 26 and 32 of the 40 in sec-tools.
+    // So the runs between them hold 21, 1, 1, 5 and 8 clauses.
+    expect(folded.flatMap((entry) => (entry.fold ? [entry.label] : []))).toEqual([
+      '21 unchanged clauses',
+      '1 unchanged clause',
+      '1 unchanged clause',
+      '5 unchanged clauses',
+      '8 unchanged clauses',
+    ])
+  })
+
+  it('v2 to v3, top of the document: folds the one section with no change', () => {
+    // docs/SPEC.md: each section but sec-intro and sec-leave holds a change in v2 to v3.
+    const top = foldUnchanged(comparison.tree, counts)
+    const folds = top.filter((entry) => entry.fold)
+
+    expect(folds.map((entry) => entry.fold && entry.items.map((item) => item.node.id))).toEqual([
+      ['sec-intro'],
+      ['sec-leave'],
+    ])
+    expect(folds.map((entry) => entry.fold && entry.label)).toEqual([
+      '1 unchanged section',
+      '1 unchanged section',
+    ])
+  })
+
+  it('v1 to v2: does not fold the marker of the clause that moved away', () => {
+    const v1v2 = diffDocuments(v1, v2)
+    const hours = find(v1v2.tree, 'sec-hours')!
+    const entries = foldUnchanged(hours.children, changeCounts(v1v2.tree))
+
+    expect(entries.some((entry) => !entry.fold && entry.item.kind === 'moved-away')).toBe(true)
+  })
+})
+
+describe('foldUnchanged: nodes below an added or a removed node', () => {
+  // docs/SPEC.md row 14: v2 adds sec-remote with 3 clauses. They are new, not unchanged.
+  it('v1 to v2: does not fold the clauses of the added section sec-remote', () => {
+    const comparison = diffDocuments(v1, v2)
+    const remote = find(comparison.tree, 'sec-remote')!
+    const entries = foldUnchanged(remote.children, changeCounts(comparison.tree))
+
+    expect(remote.children).toHaveLength(3)
+    expect(entries.filter((entry) => entry.fold)).toEqual([])
+  })
+
+  it('v1 to v3: does not fold the 4 clauses of sec-remote', () => {
+    const comparison = diffDocuments(v1, v3)
+    const remote = find(comparison.tree, 'sec-remote')!
+    const entries = foldUnchanged(remote.children, changeCounts(comparison.tree))
+
+    expect(remote.children).toHaveLength(4)
+    expect(entries.filter((entry) => entry.fold)).toEqual([])
+  })
+
+  it('v1 to v2: keeps the removed clause cl-tool-trello out of a fold', () => {
+    const comparison = diffDocuments(v1, v2)
+    const tools = find(comparison.tree, 'sec-tools')!
+    const entries = foldUnchanged(tools.children, changeCounts(comparison.tree))
+    const folded = entries.flatMap((entry) => (entry.fold ? entry.items : []))
+
+    expect(folded.map((item) => item.node.id)).not.toContain('cl-tool-trello')
+    expect(folded.map((item) => item.node.id)).not.toContain('cl-tool-cursor')
   })
 })

@@ -49,7 +49,46 @@ The order is the cut order from the bottom. If the time box ends, stop and list 
 ## Handoff
 
 - **Gate:**
-- **Review:**
-- **Measured:**
+
+  | Step | Result | Detail |
+  |---|---|---|
+  | Type check | PASS | |
+  | Lint | PASS | |
+  | Format check | PASS | |
+  | Unit tests | PASS | 152 of 152 |
+  | Build | PASS | |
+  | Prose lint | PASS | 0 hard findings |
+
+- **Review:** the first verdict was "changes needed". One Critical finding and five Important ones, all fixed.
+  1. Critical: "Changes only" folded the clauses of an added section as "3 unchanged clauses".
+     The checks before the review ran on v2 to v3 only, which has no added section.
+     A test names the bug, and the fold rule now needs a node to be in both versions.
+  2. The ring of the selected change was off while that change had focus. A CSS rule with more weight won.
+  3. A3 was not run, and A4 was measured on v2 to v3. A4 is now measured on v1 to v3, and the owner ran A3 by hand.
+  4. Two tests built their expected fold labels from the output. They now name the five labels from the data.
+  5. The status region said "3 of 10" with no noun, and it read the formatting sentence at each step.
+     It now says "Change 3 of 10" and nothing else.
+  6. The folds had no `:open` binding. The open folds are state now, and `@toggle` keeps it in step.
+  Also from the review: "Next change" now goes on from the place of the reader, not from the top.
+- **Measured:** in the browser at 1280 by 720 pixels, dark theme, on v1 to v3 with "Changes only".
+  - A1: `sec-tools` shows its changed clauses and folds of the others. `sec-remote` shows its 4 clauses and no fold.
+  - A2: on v2 to v3 the folds of `sec-tools` say 21, 1, 1, 5 and 8 unchanged clauses. A mount test checks the five labels.
+  - A3: by hand, by the owner, in a desktop browser with the dark theme, on v2 to v3 with "Changes only".
+    Find-in-page for "Zoom Video" opened the fold "21 unchanged clauses" and marked the match.
+    No script can start find-in-page, so this check has no test.
+  - A4: "Next change" reaches 21 changes in document order, from `f-intro-reviewed` to `sec-remote`.
+  - A5: at each of the 21 steps the change is below the top bar, in view and has focus. Its ring is 2 pixels.
+  - A6: mount test. An address with both versions, both switches and a node opens that view.
+  - A7: mount tests. "Copy link" says "The link is copied." or "The link is not copied."
+  - The top bar is one row of 48 pixels with no overflow. The console has no error.
 - **Not measured:**
+  - A3 in a second browser engine. One browser was checked.
+  - A width under 900 pixels with the new controls.
+  - A screen reader.
 - **Left:**
+  - Two bugs from earlier cards showed here and are fixed.
+    The hidden screen reader text in the outline made the page taller, and the outline kept an old mark at the end of the page.
+  - The selected node can be a section from the outline. Then the top bar shows the count, and the two buttons go on from there.
+  - After "Next change" the focus is on the change. A keyboard reader goes back to the top bar with Shift and Tab.
+    The card rules out single-key shortcuts, so a shortcut for this is a product decision.
+  - An address always holds `base` and `target`, so a link stays the same comparison when a new version arrives.

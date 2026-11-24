@@ -2,6 +2,7 @@ import { computed, ref, toValue, type MaybeRefOrGetter } from 'vue'
 
 import { diffDocuments } from '@/domain/diff'
 import type { HandbookDocument } from '@/domain/types'
+import type { UrlState } from './urlState'
 import {
   changeCounts,
   changesIn,
@@ -13,16 +14,24 @@ import {
  * The comparison that the reader looks at: a base version, a newer target version (D2),
  * and the choice to see formatting changes (D5).
  */
-export function useComparison(versions: MaybeRefOrGetter<readonly HandbookDocument[]>) {
-  const chosenBase = ref<number | null>(null)
-  const chosenTarget = ref<number | null>(null)
-  const showFormatting = ref(false)
+export function useComparison(
+  versions: MaybeRefOrGetter<readonly HandbookDocument[]>,
+  initial: UrlState,
+) {
+  const chosenBase = ref<number | null>(initial.base)
+  const chosenTarget = ref<number | null>(initial.target)
+  const showFormatting = ref(initial.showFormatting)
+  const changesOnly = ref(initial.changesOnly)
 
   const all = computed(() => toValue(versions))
 
+  // The oldest version has nothing older to compare with, so it is not a target.
+  const targetOptions = computed(() => (all.value.length > 1 ? all.value.slice(1) : all.value))
   // Until the reader chooses: the previous version against the latest.
   const target = computed(
-    () => all.value.find((document) => document.version === chosenTarget.value) ?? all.value.at(-1),
+    () =>
+      targetOptions.value.find((document) => document.version === chosenTarget.value) ??
+      all.value.at(-1),
   )
   // The base version is always older than the target version.
   const baseOptions = computed(() =>
@@ -33,9 +42,6 @@ export function useComparison(versions: MaybeRefOrGetter<readonly HandbookDocume
       baseOptions.value.find((document) => document.version === chosenBase.value) ??
       baseOptions.value.at(-1),
   )
-  // The oldest version has nothing older to compare with, so it is not a target.
-  const targetOptions = computed(() => (all.value.length > 1 ? all.value.slice(1) : all.value))
-
   const comparison = computed(() =>
     target.value ? diffDocuments(base.value ?? target.value, target.value) : null,
   )
@@ -62,6 +68,7 @@ export function useComparison(versions: MaybeRefOrGetter<readonly HandbookDocume
     counts,
     formattingCount,
     showFormatting,
+    changesOnly,
     chooseBase: (version: number) => (chosenBase.value = version),
     chooseTarget: (version: number) => (chosenTarget.value = version),
   }

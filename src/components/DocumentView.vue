@@ -1,22 +1,13 @@
 <script setup lang="ts">
 import type { ViewItem } from '@/domain/diff'
-import MovedAwayNote from './MovedAwayNote.vue'
-import NodeClause from './NodeClause.vue'
-import NodeSection from './NodeSection.vue'
+import NodeList from './NodeList.vue'
 
 defineProps<{ tree: readonly ViewItem[] }>()
 </script>
 
 <template>
   <div class="document">
-    <template
-      v-for="item in tree"
-      :key="item.kind === 'node' ? item.node.id : `marker-${item.node.id}`"
-    >
-      <MovedAwayNote v-if="item.kind === 'moved-away'" :marker="item" />
-      <NodeSection v-else-if="item.node.type === 'section'" :item="item" :level="2" />
-      <NodeClause v-else :item="item" :level="2" />
-    </template>
+    <NodeList :items="tree" :level="2" />
   </div>
 </template>
 

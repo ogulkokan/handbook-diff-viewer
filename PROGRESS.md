@@ -7,12 +7,15 @@ Say what changed, not what was tried.
 
 ## Current focus
 
-- **Now:** Paragraph markup shows as bold and links. Nothing from the data reaches the page as HTML.
-- **Prev:** Card 005, safe inline markup.
-- **Next:** Card 006, `docs/cards/006-find-changes.md`.
+- **Now:** A reader folds what did not change, steps from change to change, and shares a link to one.
+- **Prev:** Card 006, find changes.
+- **Next:** Card 009, `docs/cards/009-readme.md`. Cards 007 and 008 are stretch cards.
 - **Last updated:** 2026-11-24
 
 ## Log
+
+- **Card 006** (2026-11-24): "Changes only" folds runs of unchanged nodes and keeps them in the page.
+  Previous and Next change, the view in the address, and Copy link. 152 tests.
 
 - **Card 005** (2026-11-24): `parseInline` reads markup into tokens with an allowlist. An edited paragraph keeps its bold and links.
   The `img` with a handler in version 3 never reaches the page. Built test first, 122 tests.

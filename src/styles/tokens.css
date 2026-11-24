@@ -25,6 +25,8 @@
   --label-width: 10rem;
   --bar-height: 48px;
   --panel-width: 260px;
+  /* Room below the last section, so that a jump can put it near the top. */
+  --end-room: 50vh;
   --radius: 4px;
   --radius-sm: 2px;
   /* The coloured edge at the start of a changed node. */
