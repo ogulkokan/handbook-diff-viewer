@@ -27,14 +27,81 @@ export function diffSequence<T>(
   return steps
 }
 
+// A word, a run of whitespace, or one punctuation mark.
+const WORD = /\s+|[\p{L}\p{N}]+|[^\s\p{L}\p{N}]/gu
+const WHITESPACE = /^\s+$/
+
+/** A text as words, runs of whitespace and single punctuation marks. */
+export function wordsOf(text: string): string[] {
+  return text.match(WORD) ?? []
+}
+
+export interface Run<T> {
+  kind: PartKind
+  items: T[]
+}
+
+/**
+ * Two lists of words as runs of words that are the same, removed or added.
+ * In each changed place the removed run comes before the added run.
+ */
+export function diffRuns<T extends { text: string }>(
+  before: readonly T[],
+  after: readonly T[],
+  equal: (x: T, y: T) => boolean,
+): Array<Run<T>> {
+  const steps = diffSequence(before, after, equal)
+  const runs: Array<Run<T>> = []
+  let removed: T[] = []
+  let added: T[] = []
+
+  const flush = () => {
+    if (removed.length > 0) runs.push({ kind: 'removed', items: removed })
+    if (added.length > 0) runs.push({ kind: 'added', items: added })
+    removed = []
+    added = []
+  }
+
+  steps.forEach((step, index) => {
+    if (step.kind === 'removed') {
+      removed.push(step.item)
+    } else if (step.kind === 'added') {
+      added.push(step.item)
+    } else if (isSpaceBetweenChanges(steps, index)) {
+      // A space that both texts share, with changed words on each side. Kept as "same", it would
+      // cut one changed phrase into single words. It belongs to both the removed and the added run.
+      removed.push(step.item)
+      added.push(step.item)
+    } else {
+      flush()
+      const last = runs.at(-1)
+      if (last?.kind === 'same') last.items.push(step.item)
+      else runs.push({ kind: 'same', items: [step.item] })
+    }
+  })
+  flush()
+  return runs
+}
+
+function isSpaceBetweenChanges<T extends { text: string }>(
+  steps: ReadonlyArray<SequenceStep<T>>,
+  index: number,
+): boolean {
+  const previous = steps[index - 1]
+  const next = steps[index + 1]
+  return (
+    WHITESPACE.test(steps[index]!.item.text) &&
+    previous !== undefined &&
+    previous.kind !== 'same' &&
+    next !== undefined &&
+    next.kind !== 'same'
+  )
+}
+
 export interface TextPart {
   kind: PartKind
   text: string
 }
-
-// A word, a run of whitespace, or one punctuation mark.
-const TOKEN = /\s+|[\p{L}\p{N}]+|[^\s\p{L}\p{N}]/gu
-const WHITESPACE = /^\s+$/
 
 /**
  * The words that differ between two texts.
@@ -42,47 +109,9 @@ const WHITESPACE = /^\s+$/
  * back the current text.
  */
 export function diffWords(before: string, after: string): TextPart[] {
-  const steps = diffSequence(before.match(TOKEN) ?? [], after.match(TOKEN) ?? [])
-  const parts: TextPart[] = []
-  let removed = ''
-  let added = ''
-
-  const flush = () => {
-    if (removed) parts.push({ kind: 'removed', text: removed })
-    if (added) parts.push({ kind: 'added', text: added })
-    removed = ''
-    added = ''
-  }
-
-  steps.forEach((step, index) => {
-    if (step.kind === 'removed') {
-      removed += step.item
-    } else if (step.kind === 'added') {
-      added += step.item
-    } else if (isSpaceBetweenChanges(steps, index)) {
-      // A space that both texts share, with changed words on each side. Kept as "same", it would
-      // cut one changed phrase into single words. It belongs to both the removed and the added run.
-      removed += step.item
-      added += step.item
-    } else {
-      flush()
-      const last = parts.at(-1)
-      if (last?.kind === 'same') last.text += step.item
-      else parts.push({ kind: 'same', text: step.item })
-    }
-  })
-  flush()
-  return parts
-}
-
-function isSpaceBetweenChanges(steps: ReadonlyArray<SequenceStep<string>>, index: number): boolean {
-  const previous = steps[index - 1]
-  const next = steps[index + 1]
-  return (
-    WHITESPACE.test(steps[index]!.item) &&
-    previous !== undefined &&
-    previous.kind !== 'same' &&
-    next !== undefined &&
-    next.kind !== 'same'
-  )
+  const items = (text: string) => wordsOf(text).map((word) => ({ text: word }))
+  return diffRuns(items(before), items(after), (x, y) => x.text === y.text).map((run) => ({
+    kind: run.kind,
+    text: run.items.map((item) => item.text).join(''),
+  }))
 }
