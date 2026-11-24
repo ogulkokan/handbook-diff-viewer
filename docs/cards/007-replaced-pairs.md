@@ -47,7 +47,29 @@ removed clause and one added clause, and must compare them by eye.
 ## Handoff
 
 - **Gate:**
-- **Review:**
+
+  | Step | Result | Detail |
+  |---|---|---|
+  | Type check | PASS | |
+  | Lint | PASS | |
+  | Format check | PASS | |
+  | Unit tests | PASS | 163 of 163 |
+  | Build | PASS | |
+  | Prose lint | PASS | 0 hard findings |
+
+- **Review:** approved. No Critical finding. Two Important findings, both fixed. The data does not reach either one.
+  1. A lone field could pair with another field of the same clause. Only a section or a clause can pair now.
+  2. A node inside a pair with no node to match had a colour and no badge. It has its own change now.
 - **Measured:**
+  - A1, A2, A3: unit tests. The pair is `cl-sec-passwords` with `cl-sec-credentials`. Trello and Cursor do not pair.
+    The paragraph of the pair marks `offered` as removed and `available` as added.
+  - A4: mount test and browser. v1 to v2 shows 11 changes. Before this card it showed 12.
+  - A5: mount test and browser. The clause shows the badge "Replaced, likely renamed" with both titles.
+  - The reviewer scored each removed and added pair of the three comparisons. Only this pair is above 0.4. It scores 0.96.
 - **Not measured:**
+  - A document where two different clauses hold the same values, for example two tools with one vendor and one status.
+    They would pair. The data has no such case.
 - **Left:**
+  - An edit inside a pair is part of the pair. It is not in the change list and not in the counts.
+  - A formatting change inside a pair is not in the count of formatting changes.
+  - A pair across two parents is out of scope. A node that moved and got a new id stays removed and added.

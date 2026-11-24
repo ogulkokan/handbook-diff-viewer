@@ -28,7 +28,8 @@ Please keep `package-lock.json`. npm 10 cannot resolve this dependency tree from
 
 - You pick two versions. The app opens on the previous version against the latest, and the base version is always the older one.
 - You read one document: the target version in reading order, with each change marked where it is.
-- A change is added, removed, edited, moved or reordered. Each mark has a glyph and a word next to its colour.
+- A change is added, removed, edited, moved, reordered or replaced. Each mark has a glyph and a word next to its colour.
+- A clause that comes back under a new id shows as one change, "Replaced, likely renamed". The app says "likely" because it guesses.
 - An edited paragraph marks only the words that differ.
 - The side panel lists all changes, and "Previous change" and "Next change" step through them.
 - "Changes only" folds each run of unchanged content. Find-in-page still reaches the folded text.
@@ -181,7 +182,7 @@ Each card went through the same steps:
 5. A review by a read-only agent, [`.claude/agents/code-reviewer.md`](.claude/agents/code-reviewer.md). It reports only findings that it is sure of, each with the rule that is broken.
 6. A pull request with the acceptance table, the gate result and the review.
 
-The pull requests #1 to #6 have the record of each card.
+The pull requests #1 to #8 have the record of each card.
 
 ### Guardrails
 
@@ -224,13 +225,12 @@ For the card with the unsafe markup, the reviewer acted as an attacker who contr
 | Layout, focus, scrolling, themes | A check in a real browser for each card, recorded in the card |
 | Find-in-page | By hand |
 
-There are 152 unit tests. A test guards an acceptance criterion, an invariant or a bug that really happened, and its expected value comes from the data or from `docs/SPEC.md`.
+There are 163 unit tests. A test guards an acceptance criterion, an invariant or a bug that really happened, and its expected value comes from the data or from `docs/SPEC.md`.
 
 ## Not done and what I would do next
 
-### Decided, not built
+### Planned, not built
 
-- Rename under a new id (D6). `cl-sec-passwords` and `cl-sec-credentials` show as one removed and one added clause, next to each other. Card 007 pairs them as "Replaced, likely renamed".
 - A browser test. Card 008 adds one Playwright test for the main path. Today the browser checks are done by hand.
 
 ### Not measured
