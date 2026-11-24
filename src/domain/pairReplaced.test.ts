@@ -140,3 +140,33 @@ describe('pairReplaced: limits', () => {
     expect(find(paired.tree, 'f-extra')).toMatchObject({ presence: 'added' })
   })
 })
+
+describe('pairReplaced: too little content to compare', () => {
+  it('does not pair two tools that hold the same vendor and status', () => {
+    // data/v1.json: Jira and Confluence both hold the values "Atlassian" and "Approved".
+    const tool = (id: string) =>
+      clause(id, [field(`${id}-vendor`, 'Atlassian'), field(`${id}-status`, 'Approved')])
+    const base = documentOf([section('tools', [tool('jira')])])
+    const target = documentOf([section('tools', [tool('confluence')])])
+
+    const changes = pairReplaced(diffDocuments(base, target)).changes
+
+    expect(of(changes, 'jira')).toEqual(['removed'])
+    expect(of(changes, 'confluence')).toEqual(['added'])
+  })
+
+  it('pairs two clauses with 10 words of equal content, and not with 9', () => {
+    const words = 'one two three four five six seven eight nine ten'
+    const nine = 'one two three four five six seven eight nine'
+    const pairOf = (text: string) =>
+      pairReplaced(
+        diffDocuments(
+          documentOf([section('s', [clause('old', [paragraph('p-old', text)])])]),
+          documentOf([section('s', [clause('new', [paragraph('p-new', text)])])]),
+        ),
+      ).changes
+
+    expect(of(pairOf(words), 'new')).toEqual(['replaced'])
+    expect(of(pairOf(nine), 'new')).toEqual(['added'])
+  })
+})

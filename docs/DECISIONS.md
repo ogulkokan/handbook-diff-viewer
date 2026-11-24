@@ -44,7 +44,9 @@ Code names a decision short, as `(D7)`. A decision changes only when the owner s
 **Context.** `cl-sec-passwords` becomes `cl-sec-credentials`: a new id, the same place, and one word of text differs.
 **Decision.** A removed node and an added node pair as "replaced" under three conditions.
 They have the same parent and the same type, and the text of their leaves is at least 80% alike.
+Each side must hold 10 words of content or more.
 **Rejected.** A match on labels. Trello and Cursor have the same labels and are different tools.
+**Rejected.** A pair of two short clauses. Jira and Confluence hold the same two values and are different tools.
 **Consequence.** The UI says "Replaced, likely renamed". The schema says a new id is a new node, so the app does not claim more.
 
 ## D7 — Inline markup becomes tokens, never HTML
