@@ -38,6 +38,16 @@ export function likeness(a: DocNode, b: DocNode): number {
   return (2 * lcsPairs(wordsA, wordsB).length) / (wordsA.length + wordsB.length)
 }
 
+function sizeOf(item: ViewNode): number {
+  return item.children.reduce((sum, child) => sum + (child.kind === 'node' ? sizeOf(child) : 0), 1)
+}
+
+function withOwnChange(item: ViewNode, kind: 'added' | 'removed'): ViewNode {
+  if (item.changes.length > 0) return item
+  const change = { kind, nodeId: item.node.id, nodeType: item.node.type, size: sizeOf(item) }
+  return { ...item, changes: [change] }
+}
+
 // The nodes below a pair, matched by type and order. A matched node shows what differs.
 function pairChildren(
   removed: readonly ViewItem[],
@@ -48,7 +58,9 @@ function pairChildren(
   const result: ViewItem[] = added.map((item) => {
     if (item.kind !== 'node') return item
     const index = unused.findIndex((candidate) => candidate.node.type === item.node.type)
-    if (index === -1) return item
+    // No node to match: this one is new inside the pair. It gets its own change, so that it
+    // has a badge and a place in the change list, not only a colour.
+    if (index === -1) return withOwnChange(item, 'added')
     const [earlier] = unused.splice(index, 1)
     const edits = editsBetween(earlier!.node, item.node)
     const changes: EditedChange[] =
@@ -72,13 +84,18 @@ function pairChildren(
       children: pairChildren(earlier!.children, item.children, pairId),
     }
   })
-  // A node of the earlier version with no partner stays, as removed.
-  return [...result, ...unused]
+  // A node of the earlier version with no partner stays, as removed, after the others.
+  return [...result, ...unused.map((item) => withOwnChange(item, 'removed'))]
 }
 
 function pairList(items: readonly ViewItem[]): ViewItem[] {
+  // Only a section or a clause can pair. A lone field or paragraph has too little content
+  // for the measure: two fields with the value "Approved" would be 100% alike.
   const isTop = (item: ViewItem, presence: ViewNode['presence']): item is ViewNode =>
-    item.kind === 'node' && item.presence === presence && item.changes.length > 0
+    item.kind === 'node' &&
+    item.presence === presence &&
+    item.changes.length > 0 &&
+    (item.node.type === 'section' || item.node.type === 'clause')
   const removed = items.filter((item) => isTop(item, 'removed'))
   const partnerOf = new Map<ViewItem, ViewNode>()
   const paired = new Set<ViewItem>()
