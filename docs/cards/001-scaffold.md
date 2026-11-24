@@ -72,11 +72,13 @@ The build needs a project that starts and one command that says if a change is g
   - A4: the edit hook exits with 2 on that component and with 0 on `src/App.vue`.
   - A6: `npm ls` shows Vue 3.5.46, Vite 8.3.8 and TypeScript 6.0.3.
   - A file in `src/domain/` that imports `vue` fails the lint step.
+  - A5: the first CI run on this pull request passes in 47 seconds. It runs `npm ci` and `npm run gate`.
 - **Not measured:**
-  - A5: the CI file is written, but no run exists yet. The pull request of this card is the first run.
+  - Nothing is open.
 - **Left:**
   - The lock file must stay in the repository. npm 10 cannot resolve this tree from `package.json` alone.
   - Vitest is 4.1, as `create-vue` wrote it. Vitest 5 is a new major and is not used.
   - The test environment is jsdom, as `create-vue` wrote it.
   - `npm audit` reports 5 moderate findings. All are in dev dependencies, through `@vue/test-utils`.
   - Tests sit next to the code as `*.test.ts`.
+  - CI uses `actions/checkout@v7` and `actions/setup-node@v7`. Version 4 of both gave a warning about its Node runtime.
