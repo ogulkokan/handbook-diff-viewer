@@ -29,8 +29,10 @@ DISABLE_TELEMETRY=1 npx -y modern-web-guidance@latest retrieve "state-aware-stic
 
 | Need | Feature | Guide |
 |---|---|---|
-| A section or clause that folds | `<details>` and `<summary>` | `accordion` |
+| A section or a clause | A heading inside `<section>` or `<article>` | `accordion` |
+| A run of unchanged nodes that folds | `<details>` and `<summary>` | `accordion` |
 | Folded text that find-in-page still finds | A closed `<details>` | `search-hidden-content` |
+| A jump from the outline | A link to the id of the target | `scrollspy` |
 | An outline that follows the scroll position | `IntersectionObserver` and `aria-current` | `scrollspy` |
 | A top bar that stays in view | `position: sticky`, one row | `content-first-noise-reduction` |
 | A jump target that the top bar does not cover | `scroll-padding-top` | `state-aware-sticky-headers` |
@@ -41,6 +43,7 @@ DISABLE_TELEMETRY=1 npx -y modern-web-guidance@latest retrieve "state-aware-stic
 
 ## Rules for Vue
 
+- Do not put a heading inside `<summary>`. JAWS and TalkBack then drop the heading.
 - Do not fold text with `v-if` or `v-show`. Both take the text away from find-in-page.
 - The browser opens and closes a `<details>` element itself. Bind `:open` and listen to `@toggle`.
 - Give a jump target `tabindex="-1"`, so that it can take focus.
