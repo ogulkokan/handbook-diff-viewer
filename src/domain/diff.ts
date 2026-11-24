@@ -1,4 +1,4 @@
-import { indexDocument, type DocumentIndex } from './indexTree'
+import { indexDocument, type DocumentIndex, type IndexEntry } from './indexTree'
 import { lcsPairs } from './lcs'
 import { isFormattingOnly } from './normalize'
 import type { DocNode, HandbookDocument, NodeType } from './types'
@@ -72,8 +72,15 @@ function childrenByParent(document: HandbookDocument): Children {
   return result
 }
 
-function sizeOf(node: DocNode): number {
-  return 'children' in node ? node.children.reduce((sum, child) => sum + sizeOf(child), 1) : 1
+/**
+ * The nodes of a subtree that the other version does not hold.
+ * A node that the other version holds was not added or removed. It moved, and it is reported
+ * where it is now, so the count stops there.
+ */
+function sizeOf(node: DocNode, other: DocumentIndex): number {
+  if (other.byId.has(node.id)) return 0
+  if (!('children' in node)) return 1
+  return node.children.reduce((sum, child) => sum + sizeOf(child, other), 1)
 }
 
 function partsOf(node: DocNode): Array<[EditedPart, string | undefined]> {
@@ -159,33 +166,50 @@ export function diffDocuments(base: HandbookDocument, target: HandbookDocument):
     return merged
   }
 
+  function visitKept(node: DocNode, parentId: string | null, earlier: IndexEntry): void {
+    const common = { nodeId: node.id, nodeType: node.type }
+    if (earlier.parentId !== parentId) {
+      changes.push({
+        kind: 'moved',
+        ...common,
+        fromParentId: earlier.parentId,
+        toParentId: parentId,
+      })
+    }
+    if (reordered.has(node.id)) changes.push({ kind: 'reordered', ...common })
+    const edits = editsBetween(earlier.node, node)
+    if (edits.length > 0) {
+      const formatting = edits.every((edit) => edit.formatting)
+      changes.push({ kind: 'edited', ...common, edits, formatting })
+    }
+    if ('children' in node) visit(node.id)
+  }
+
+  // An added node is one change. A node below it that the base version holds moved into it:
+  // that node gets its own changes, and the walk goes on from there.
+  function visitAdded(node: DocNode): void {
+    if (!('children' in node)) return
+    for (const child of node.children) {
+      const earlier = baseIndex.byId.get(child.id)
+      if (earlier) visitKept(child, node.id, earlier)
+      else visitAdded(child)
+    }
+  }
+
   function visit(parentId: string | null): void {
     for (const { node, removed } of mergedChildren(parentId)) {
       const common = { nodeId: node.id, nodeType: node.type }
       if (removed) {
-        changes.push({ kind: 'removed', ...common, size: sizeOf(node) })
+        changes.push({ kind: 'removed', ...common, size: sizeOf(node, targetIndex) })
         continue
       }
       const earlier = baseIndex.byId.get(node.id)
-      if (!earlier) {
-        changes.push({ kind: 'added', ...common, size: sizeOf(node) })
-        continue
+      if (earlier) {
+        visitKept(node, parentId, earlier)
+      } else {
+        changes.push({ kind: 'added', ...common, size: sizeOf(node, baseIndex) })
+        visitAdded(node)
       }
-      if (earlier.parentId !== parentId) {
-        changes.push({
-          kind: 'moved',
-          ...common,
-          fromParentId: earlier.parentId,
-          toParentId: parentId,
-        })
-      }
-      if (reordered.has(node.id)) changes.push({ kind: 'reordered', ...common })
-      const edits = editsBetween(earlier.node, node)
-      if (edits.length > 0) {
-        const formatting = edits.every((edit) => edit.formatting)
-        changes.push({ kind: 'edited', ...common, edits, formatting })
-      }
-      if ('children' in node) visit(node.id)
     }
   }
 
