@@ -20,6 +20,8 @@
   --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
   --measure: 75ch;
+  --document-width: 52rem;
+  --label-width: 10rem;
   --bar-height: 48px;
   --panel-width: 260px;
   --radius: 4px;

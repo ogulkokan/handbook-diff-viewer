@@ -73,7 +73,7 @@ const blocks = computed<Block[]>(() => {
 
 .fields__row {
   display: grid;
-  grid-template-columns: minmax(10rem, 30%) 1fr;
+  grid-template-columns: minmax(var(--label-width), 30%) 1fr;
   gap: var(--space-3);
   padding-block: var(--space-1);
 }

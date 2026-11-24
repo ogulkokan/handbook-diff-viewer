@@ -17,6 +17,6 @@ defineProps<{ document: HandbookDocument }>()
 
 <style scoped>
 .document {
-  max-inline-size: 52rem;
+  max-inline-size: var(--document-width);
 }
 </style>

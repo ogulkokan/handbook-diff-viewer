@@ -1,11 +1,23 @@
 <script setup lang="ts">
 import type { ClauseNode, SectionNode } from '@/domain/types'
 
-defineProps<{
+const { activeId } = defineProps<{
   nodes: ReadonlyArray<SectionNode | ClauseNode>
-  /** The id of the section that is in view. */
+  /** The id of the section that is in view, or null when it is not in this list. */
   activeId: string | null
 }>()
+
+function holds(nodes: ReadonlyArray<SectionNode | ClauseNode>, id: string): boolean {
+  return nodes.some(
+    (node) => node.id === id || (node.type === 'section' && holds(node.children, id)),
+  )
+}
+
+// A nested list gets the id only when it holds that section. The other lists get null,
+// so they do not render again each time the section in view changes.
+function activeIdFor(section: SectionNode): string | null {
+  return activeId !== null && holds(section.children, activeId) ? activeId : null
+}
 </script>
 
 <template>
@@ -19,7 +31,11 @@ defineProps<{
       >
         {{ node.title }}
       </a>
-      <OutlineTree v-if="node.type === 'section'" :nodes="node.children" :active-id="activeId" />
+      <OutlineTree
+        v-if="node.type === 'section'"
+        :nodes="node.children"
+        :active-id="activeIdFor(node)"
+      />
     </li>
   </ul>
 </template>

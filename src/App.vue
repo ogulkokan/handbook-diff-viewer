@@ -28,11 +28,18 @@ function sectionIds(nodes: ReadonlyArray<SectionNode | ClauseNode>): string[] {
 const { activeId } = useScrollSpy(() => (current.value ? sectionIds(current.value.children) : []))
 
 // The outline is longer than the screen. Keep the marked item in view inside the panel.
+// scrollIntoView would also scroll the page, so only the panel's own scroll position changes.
 const panel = useTemplateRef('panel')
 watch(activeId, (id) => {
-  if (id === null) return
-  const link = panel.value?.querySelector(`a[href="#${CSS.escape(id)}"]`)
-  link?.scrollIntoView({ block: 'nearest' })
+  const box = panel.value
+  if (id === null || !box || box.scrollHeight <= box.clientHeight) return
+  const link = box.querySelector(`a[href="#${CSS.escape(id)}"]`)
+  if (!link) return
+
+  const boxRect = box.getBoundingClientRect()
+  const linkRect = link.getBoundingClientRect()
+  if (linkRect.top < boxRect.top) box.scrollTop -= boxRect.top - linkRect.top
+  else if (linkRect.bottom > boxRect.bottom) box.scrollTop += linkRect.bottom - boxRect.bottom
 })
 </script>
 
