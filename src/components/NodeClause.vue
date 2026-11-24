@@ -8,6 +8,7 @@ import MovedAwayNote from './MovedAwayNote.vue'
 import NodeBadges from './NodeBadges.vue'
 import NodeField from './NodeField.vue'
 import NodeParagraph from './NodeParagraph.vue'
+import PresenceText from './PresenceText.vue'
 import TextChange from './TextChange.vue'
 
 const { item, level } = defineProps<{
@@ -55,10 +56,10 @@ const blocks = computed<Block[]>(() => {
     :aria-labelledby="`${clause.id}-title`"
   >
     <component :is="`h${level}`" :id="`${clause.id}-title`" class="clause__title">
-      <span class="clause__name">
+      <PresenceText :presence="item.presence">
         <TextChange v-if="titleEdit" :before="titleEdit.before" :after="titleEdit.after" />
         <template v-else>{{ clause.title }}</template>
-      </span>
+      </PresenceText>
       <ChangeBadge v-if="clause.status === 'draft'" class="clause__status" kind="draft" />
       <span v-else-if="clause.status" class="clause__status">{{ clause.status }}</span>
       <NodeBadges :changes="item.changes" />
@@ -83,7 +84,7 @@ const blocks = computed<Block[]>(() => {
 .clause {
   padding: var(--space-3) var(--space-2);
   border-block-start: 1px solid var(--border);
-  border-inline-start: 3px solid transparent;
+  border-inline-start: var(--edge-change) solid transparent;
 }
 
 .clause__title {
@@ -113,10 +114,5 @@ const blocks = computed<Block[]>(() => {
 .clause--removed {
   border-inline-start-color: var(--removed-text);
   background: var(--removed-bg);
-}
-
-.clause--removed .clause__name {
-  color: var(--removed-text);
-  text-decoration: line-through;
 }
 </style>

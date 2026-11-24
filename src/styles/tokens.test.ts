@@ -49,6 +49,12 @@ const TEXT_PAIRS: Array<[string, string]> = [
   ['--edited-text', '--edited-bg'],
   ['--moved-text', '--moved-bg'],
   ['--neutral-text', '--neutral-bg'],
+  // The text of an added or a removed node stands on the tint of that node.
+  ['--text', '--added-bg'],
+  ['--text', '--removed-bg'],
+  ['--muted', '--added-bg'],
+  // The title of a removed section has no tint behind it.
+  ['--removed-text', '--bg'],
 ]
 
 describe('colour tokens', () => {

@@ -359,3 +359,24 @@ describe('diffDocuments: a node that changes parent together with an added or re
     expect(one(changes, 'f-new', 'added')).toMatchObject({ size: 1 })
   })
 })
+
+describe('diffDocuments: the words of an edited paragraph', () => {
+  it('v2 to v3, p-travel-flights-1: the edit holds the words that differ', () => {
+    // docs/SPEC.md: "flights under six hours" becomes "flights under eight hours".
+    const change = one(diffDocuments(v2, v3).changes, 'p-travel-flights-1', 'edited')
+    const parts = change.kind === 'edited' ? (change.edits[0]!.parts ?? []) : []
+
+    expect(parts.filter((part) => part.kind === 'removed').map((part) => part.text)).toEqual([
+      'six',
+    ])
+    expect(parts.filter((part) => part.kind === 'added').map((part) => part.text)).toEqual([
+      'eight',
+    ])
+  })
+
+  it('gives no word parts for the edit of a field value', () => {
+    const change = one(diffDocuments(v1, v2).changes, 'f-leave-annual-days', 'edited')
+
+    expect(change.kind === 'edited' && change.edits[0]!.parts).toBeUndefined()
+  })
+})

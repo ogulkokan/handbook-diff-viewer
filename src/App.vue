@@ -70,7 +70,7 @@ const formattingText = computed(() => {
     <template v-if="target">
       <div class="bar__group">
         <label class="bar__field">
-          <span>Compare</span>
+          <span>Compare<span class="sr-only"> base version</span></span>
           <select
             :value="base?.version"
             :disabled="baseOptions.length === 0"
@@ -86,7 +86,7 @@ const formattingText = computed(() => {
           </select>
         </label>
         <label class="bar__field">
-          <span>with</span>
+          <span>with<span class="sr-only"> target version</span></span>
           <select :value="target.version" @change="chooseTarget(versionOf($event))">
             <option
               v-for="document in targetOptions"

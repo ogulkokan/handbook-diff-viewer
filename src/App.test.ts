@@ -51,12 +51,18 @@ describe('App', () => {
     expect(wrapper.get('[role="status"]').text()).toBe(
       '12 changes 2 formatting changes are hidden.',
     )
+    // The paragraph is in the page, and it shows no mark while formatting changes are hidden.
+    expect(wrapper.find('#p-leave-sick-1').exists()).toBe(true)
     expect(wrapper.find('#p-leave-sick-1 del').exists()).toBe(false)
+    expect(wrapper.find('#f-exp-equipment-limit del').exists()).toBe(false)
 
     await wrapper.get('header button').trigger('click')
 
     expect(wrapper.get('[role="status"]').text()).toBe('14 changes 2 formatting changes are shown.')
     expect(wrapper.get('header button').attributes('aria-pressed')).toBe('true')
+    // data/: "1,000 EUR" in v1 and "1000 EUR" in v2.
+    expect(wrapper.get('#f-exp-equipment-limit del').text()).toBe('Removed: 1,000 EUR')
+    expect(wrapper.get('#f-exp-equipment-limit ins').text()).toBe('Added: 1000 EUR')
   })
 
   it('never offers a base version that is not older than the target', async () => {
@@ -70,5 +76,20 @@ describe('App', () => {
     expect(
       target!.findAll<HTMLOptionElement>('option').map((option) => option.element.value),
     ).toEqual(['2', '3'])
+  })
+})
+
+describe('App: a removed node', () => {
+  it('marks the text below a removed clause as removed for a screen reader', async () => {
+    const wrapper = await mountApp()
+    const [base, target] = wrapper.findAll<HTMLSelectElement>('header select')
+    await target!.setValue('2')
+    await base!.setValue('1')
+
+    // v1 to v2 removes cl-sec-passwords with its paragraph. Only the clause has a badge.
+    expect(wrapper.get('#cl-sec-passwords h3 del').text()).toBe('Removed: Passwords')
+    expect(wrapper.get('#p-sec-passwords-1 del').text()).toContain('Removed: Use the company')
+    // The clause that replaced it is current text, with no <del>.
+    expect(wrapper.find('#cl-sec-credentials del').exists()).toBe(false)
   })
 })

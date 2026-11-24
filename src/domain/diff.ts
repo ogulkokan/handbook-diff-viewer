@@ -1,6 +1,8 @@
 import { indexDocument, type DocumentIndex, type IndexEntry } from './indexTree'
 import { lcsPairs } from './lcs'
 import { isFormattingOnly } from './normalize'
+import { plainText } from './text'
+import { diffWords, type TextPart } from './textDiff'
 import type { DocNode, HandbookDocument, NodeType } from './types'
 
 export type ChangeKind = 'added' | 'removed' | 'edited' | 'moved' | 'reordered'
@@ -15,6 +17,8 @@ export interface Edit {
   after: string | undefined
   /** True when only whitespace or the format of a number differs (D5). */
   formatting: boolean
+  /** For the text of a paragraph that is in both versions: the words that differ. */
+  parts?: TextPart[]
 }
 
 interface ChangeOf<K extends ChangeKind> {
@@ -140,7 +144,11 @@ function editsBetween(base: DocNode, target: DocNode): Edit[] {
     if (earlier === after) continue
     const formatting =
       earlier !== undefined && after !== undefined && isFormattingOnly(earlier, after)
-    edits.push({ part, before: earlier, after, formatting })
+    const edit: Edit = { part, before: earlier, after, formatting }
+    if (part === 'text' && earlier !== undefined && after !== undefined) {
+      edit.parts = diffWords(plainText(earlier), plainText(after))
+    }
+    edits.push(edit)
   }
   return edits
 }

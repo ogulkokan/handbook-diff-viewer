@@ -6,6 +6,7 @@ import { editOf } from '@/domain/view'
 import MovedAwayNote from './MovedAwayNote.vue'
 import NodeBadges from './NodeBadges.vue'
 import NodeClause from './NodeClause.vue'
+import PresenceText from './PresenceText.vue'
 import TextChange from './TextChange.vue'
 
 const { item, level } = defineProps<{
@@ -31,10 +32,10 @@ const titleEdit = computed(() => editOf(item.changes, 'title'))
     :aria-labelledby="`${section.id}-title`"
   >
     <component :is="`h${level}`" :id="`${section.id}-title`" class="section__title">
-      <span class="section__name">
+      <PresenceText :presence="item.presence">
         <TextChange v-if="titleEdit" :before="titleEdit.before" :after="titleEdit.after" />
         <template v-else>{{ section.title }}</template>
-      </span>
+      </PresenceText>
       <NodeBadges :changes="item.changes" />
     </component>
 
@@ -52,7 +53,7 @@ const titleEdit = computed(() => editOf(item.changes, 'title'))
 <style scoped>
 .section {
   margin-block-end: var(--space-6);
-  border-inline-start: 3px solid transparent;
+  border-inline-start: var(--edge-change) solid transparent;
 }
 
 .section .section {
@@ -78,10 +79,5 @@ const titleEdit = computed(() => editOf(item.changes, 'title'))
 
 .section--removed {
   border-inline-start-color: var(--removed-text);
-}
-
-.section--removed > .section__title .section__name {
-  color: var(--removed-text);
-  text-decoration: line-through;
 }
 </style>

@@ -22,7 +22,7 @@ const { nameInTarget } = useNodeNames()
   margin: 0;
   padding: var(--space-2);
   border-block-start: 1px solid var(--border);
-  border-inline-start: 3px solid var(--moved-text);
+  border-inline-start: var(--edge-change) solid var(--moved-text);
   background: var(--moved-bg);
   color: var(--moved-text);
   font-size: var(--text-sm);

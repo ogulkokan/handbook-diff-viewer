@@ -4,6 +4,7 @@ import { computed } from 'vue'
 import type { ViewNode } from '@/domain/diff'
 import { editOf } from '@/domain/view'
 import NodeBadges from './NodeBadges.vue'
+import PresenceText from './PresenceText.vue'
 import TextChange from './TextChange.vue'
 
 const { item } = defineProps<{ item: ViewNode }>()
@@ -19,14 +20,16 @@ const valueEdit = computed(() => editOf(item.changes, 'value'))
 <template>
   <div :id="field.id" class="row" :class="`row--${item.presence}`" tabindex="-1">
     <dt class="row__label">
-      <TextChange v-if="labelEdit" :before="labelEdit.before" :after="labelEdit.after" />
-      <template v-else>{{ field.label }}</template>
+      <PresenceText :presence="item.presence">
+        <TextChange v-if="labelEdit" :before="labelEdit.before" :after="labelEdit.after" />
+        <template v-else>{{ field.label }}</template>
+      </PresenceText>
     </dt>
     <dd class="row__value">
-      <span class="row__text">
+      <PresenceText :presence="item.presence">
         <TextChange v-if="valueEdit" :before="valueEdit.before" :after="valueEdit.after" />
         <template v-else>{{ field.value }}</template>
-      </span>
+      </PresenceText>
       <NodeBadges :changes="item.changes" />
     </dd>
   </div>
@@ -38,7 +41,7 @@ const valueEdit = computed(() => editOf(item.changes, 'value'))
   grid-template-columns: minmax(var(--label-width), 30%) 1fr;
   gap: var(--space-3);
   padding: var(--space-1) var(--space-2);
-  border-inline-start: 3px solid transparent;
+  border-inline-start: var(--edge-change) solid transparent;
 }
 
 .row__label {
@@ -59,12 +62,6 @@ const valueEdit = computed(() => editOf(item.changes, 'value'))
 .row--removed {
   border-inline-start-color: var(--removed-text);
   background: var(--removed-bg);
-}
-
-.row--removed .row__label,
-.row--removed .row__text {
-  color: var(--removed-text);
-  text-decoration: line-through;
 }
 
 .row--added .row__label {

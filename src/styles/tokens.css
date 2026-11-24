@@ -3,6 +3,7 @@
 :root {
   color-scheme: light dark;
 
+  --space-half: 2px;
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -26,6 +27,8 @@
   --panel-width: 260px;
   --radius: 4px;
   --radius-sm: 2px;
+  /* The coloured edge at the start of a changed node. */
+  --edge-change: 3px;
 
   --bg: #ffffff;
   --surface: #f8fafc;

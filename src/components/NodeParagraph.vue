@@ -5,6 +5,7 @@ import type { ViewNode } from '@/domain/diff'
 import { plainText } from '@/domain/text'
 import { editOf } from '@/domain/view'
 import NodeBadges from './NodeBadges.vue'
+import PresenceText from './PresenceText.vue'
 import TextChange from './TextChange.vue'
 
 const { item } = defineProps<{ item: ViewNode }>()
@@ -18,15 +19,10 @@ const edit = computed(() => editOf(item.changes, 'text'))
 
 <template>
   <p :id="paragraph.id" class="text" :class="`text--${item.presence}`" tabindex="-1">
-    <span class="text__body">
-      <TextChange
-        v-if="edit"
-        :before="edit.before === undefined ? undefined : plainText(edit.before)"
-        :after="edit.after === undefined ? undefined : plainText(edit.after)"
-        words
-      />
+    <PresenceText :presence="item.presence">
+      <TextChange v-if="edit" :before="edit.before" :after="edit.after" :parts="edit.parts" />
       <template v-else>{{ plainText(paragraph.text) }}</template>
-    </span>
+    </PresenceText>
     <NodeBadges :changes="item.changes" />
   </p>
 </template>
@@ -36,7 +32,7 @@ const edit = computed(() => editOf(item.changes, 'text'))
   margin: 0 0 var(--space-2);
   padding: var(--space-1) var(--space-2);
   max-inline-size: var(--measure);
-  border-inline-start: 3px solid transparent;
+  border-inline-start: var(--edge-change) solid transparent;
 }
 
 .text--added {
@@ -47,10 +43,5 @@ const edit = computed(() => editOf(item.changes, 'text'))
 .text--removed {
   border-inline-start-color: var(--removed-text);
   background: var(--removed-bg);
-}
-
-.text--removed .text__body {
-  color: var(--removed-text);
-  text-decoration: line-through;
 }
 </style>
