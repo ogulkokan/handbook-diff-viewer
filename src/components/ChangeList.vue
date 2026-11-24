@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { useNodeNames } from '@/composables/comparisonContext'
 import type { Change, Comparison } from '@/domain/diff'
 import { describeChange } from '@/domain/view'
 import ChangeBadge, { type BadgeKind } from './ChangeBadge.vue'
@@ -12,21 +11,18 @@ const { changes, comparison } = defineProps<{
   comparison: Comparison
 }>()
 
-const { nameInBase } = useNodeNames()
-
 const entries = computed(() =>
   changes.map((change) => {
-    const { name, context } = describeChange(comparison, change)
+    const { name, path, detail } = describeChange(comparison, change)
     const kind: BadgeKind =
       change.kind === 'edited' && change.formatting ? 'formatting' : change.kind
-    const detail = change.kind === 'moved' ? `from ${nameInBase(change.fromParentId)}` : ''
     return {
       key: `${change.kind}-${change.nodeId}`,
       href: `#${change.nodeId}`,
       kind,
-      detail,
       name,
-      context,
+      path: path.join(' / '),
+      detail,
     }
   }),
 )
@@ -37,9 +33,12 @@ const entries = computed(() =>
   <ol v-else class="changes">
     <li v-for="entry in entries" :key="entry.key">
       <a class="changes__link" :href="entry.href">
-        <ChangeBadge :kind="entry.kind" :detail="entry.detail" />
-        <span class="changes__name">{{ entry.name }}</span>
-        <span v-if="entry.context" class="changes__context">in {{ entry.context }}</span>
+        <span v-if="entry.path" class="changes__path">{{ entry.path }}</span>
+        <span class="changes__line">
+          <ChangeBadge :kind="entry.kind" />
+          <span class="changes__name">{{ entry.name }}</span>
+        </span>
+        <span v-if="entry.detail" class="changes__detail">{{ entry.detail }}</span>
       </a>
     </li>
   </ol>
@@ -54,17 +53,23 @@ const entries = computed(() =>
 
 .changes__link {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--space-1);
-  padding: var(--space-1) var(--space-2);
+  flex-direction: column;
+  gap: var(--space-half);
+  padding: var(--space-2);
+  border-block-end: 1px solid var(--border);
   color: var(--text);
   text-decoration: none;
-  border-radius: var(--radius);
 }
 
 .changes__link:hover {
   background: var(--surface);
+}
+
+.changes__line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
 }
 
 .changes__name {
@@ -72,7 +77,8 @@ const entries = computed(() =>
   overflow-wrap: anywhere;
 }
 
-.changes__context {
+.changes__path,
+.changes__detail {
   color: var(--muted);
 }
 
