@@ -16,7 +16,8 @@ The app is a reading tool for a document that people must trust. It is calm and 
 - Numbers in a count or a column use `font-variant-numeric: tabular-nums`.
 - Spacing steps are 4, 8, 12, 16, 24 and 32 pixels.
 - The reading column is about 75 characters wide. The outline is 260 pixels wide, and the change list is 320 pixels wide.
-- From 1200 pixels the page has three columns: the outline, the text and the change list. Below that, the two lists share the left panel.
+- From 1000 pixels the page has three columns: the outline, the text and the change list. The side columns get narrower on a small window. Below 1000 pixels the page is one column.
+- The markup has the order of the page, so the Tab key follows what the reader sees.
 - The top bar is one row, 48 pixels high. Below 1200 pixels it has two rows.
 
 ## Rules in order of weight

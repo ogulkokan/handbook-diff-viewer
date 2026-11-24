@@ -227,7 +227,7 @@ For the card with the unsafe markup, the reviewer acted as an attacker who contr
 | Layout, focus, scrolling, themes | A check in a real browser for each card, recorded in the card |
 | Find-in-page | By hand |
 
-There are 170 unit tests. A test guards an acceptance criterion, an invariant or a bug that really happened, and its expected value comes from the data or from `docs/SPEC.md`.
+There are 172 unit tests. A test guards an acceptance criterion, an invariant or a bug that really happened, and its expected value comes from the data or from `docs/SPEC.md`.
 
 ## Not done and what I would do next
 
@@ -237,7 +237,7 @@ There are 170 unit tests. A test guards an acceptance criterion, an invariant or
 
 ### The size of the code
 
-The code is larger than this task needs. The comparison is about 1124 lines in `src/domain/`, and the page is about 1351 lines in 14 components and `App.vue`.
+The code is larger than this task needs. The comparison is about 1138 lines in `src/domain/`, and the page is about 1303 lines in 14 components and `App.vue`.
 It grew in the reviews. Each round added a case for an edge of the data or for a screen reader, and no round took code away.
 With more time I would do one pass only to make it smaller. Two places to start:
 
@@ -254,7 +254,7 @@ With more time I would do one pass only to make it smaller. Two places to start:
 
 - A screen reader. The `<del>`, `<ins>` and hidden words are checked in the DOM only.
 - Find-in-page in a second browser engine.
-- A window under 900 pixels. Between 900 and 1200 pixels the top bar has two rows and the two lists share the left panel.
+- The steps through the changes in a window under 1000 pixels. There the page is one column: the outline, the text, then the change list. Only the layout was checked.
 - A large document. See the next section.
 
 ### If the document grows

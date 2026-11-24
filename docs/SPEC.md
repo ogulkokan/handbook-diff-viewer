@@ -16,7 +16,7 @@ The reader does not edit the document. After the review, the reader shares a lin
 ## Solution
 
 The app shows one document: the target version, in its reading order. It marks each change in place.
-A side panel lists all changes and the outline. A top bar holds the two version pickers and the controls.
+The outline is in a column on the left, and a column on the right lists all changes. A top bar holds the two version pickers and the controls.
 
 ## User stories
 
