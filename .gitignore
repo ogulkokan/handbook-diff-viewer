@@ -5,5 +5,8 @@ playwright-report/
 test-results/
 .cache/
 *.local
+*.log
+*.tsbuildinfo
+.eslintcache
 .DS_Store
 .claude/settings.local.json

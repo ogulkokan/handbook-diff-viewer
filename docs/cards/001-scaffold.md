@@ -54,7 +54,31 @@ The build needs a project that starts and one command that says if a change is g
 ## Handoff
 
 - **Gate:**
+
+  | Step | Result | Detail |
+  |---|---|---|
+  | Type check | PASS | `vue-tsc --build`, strict |
+  | Lint | PASS | `eslint .` |
+  | Format check | PASS | `prettier --check .` |
+  | Unit tests | PASS | 1 of 1 |
+  | Build | PASS | `vite build` |
+  | Prose lint | PASS | 0 hard findings |
+
 - **Review:** not needed for this card.
 - **Measured:**
+  - A1: `npm ci` and `npm install` pass on npm 10.9.7. The page opens and shows the app name. The console has no error.
+  - A2: `npm run gate` passes with the six steps above.
+  - A3: a component with `v-html` gives `vue/no-v-html` as an error.
+  - A4: the edit hook exits with 2 on that component and with 0 on `src/App.vue`.
+  - A6: `npm ls` shows Vue 3.5.46, Vite 8.3.8 and TypeScript 6.0.3.
+  - A file in `src/domain/` that imports `vue` fails the lint step.
+  - A5: the first CI run on this pull request passes in 47 seconds. It runs `npm ci` and `npm run gate`.
 - **Not measured:**
+  - Nothing is open.
 - **Left:**
+  - The lock file must stay in the repository. npm 10 cannot resolve this tree from `package.json` alone.
+  - Vitest is 4.1, as `create-vue` wrote it. Vitest 5 is a new major and is not used.
+  - The test environment is jsdom, as `create-vue` wrote it.
+  - `npm audit` reports 5 moderate findings. All are in dev dependencies, through `@vue/test-utils`.
+  - Tests sit next to the code as `*.test.ts`.
+  - CI uses `actions/checkout@v7` and `actions/setup-node@v7`. Version 4 of both gave a warning about its Node runtime.
