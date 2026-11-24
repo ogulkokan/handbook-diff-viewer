@@ -260,3 +260,24 @@ describe('diffDocuments: document order', () => {
     expect(ids.indexOf('f-sec-access-cadence')).toBeLessThan(ids.indexOf('f-tool-grammarly-status'))
   })
 })
+
+describe('diffDocuments: totals that the reader sees', () => {
+  const visible = (changes: readonly Change[]) =>
+    changes.filter((change) => !(change.kind === 'edited' && change.formatting))
+
+  it('v1 to v2: 12 changes and 2 formatting changes', () => {
+    // docs/SPEC.md: 3 added, 2 removed, 1 moved, 1 reordered, 5 edited. And 2 formatting.
+    const changes = diffDocuments(v1, v2).changes
+
+    expect(visible(changes)).toHaveLength(12)
+    expect(changes).toHaveLength(14)
+  })
+
+  it('v2 to v3: 10 changes and no formatting change', () => {
+    // docs/SPEC.md: 1 added, 1 removed, 8 edited.
+    const changes = diffDocuments(v2, v3).changes
+
+    expect(visible(changes)).toHaveLength(10)
+    expect(changes).toHaveLength(10)
+  })
+})
