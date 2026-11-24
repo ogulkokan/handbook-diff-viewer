@@ -13,6 +13,7 @@ docs:
   - docs/SPEC.md
   - docs/conventions/web-platform.md
   - docs/conventions/ui.md
+  - docs/conventions/vue.md
 ---
 
 # Card 002: read one version

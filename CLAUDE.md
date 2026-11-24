@@ -66,7 +66,8 @@ Each file holds the rules for one area. Read the file before you work in that ar
 
 - Text for people and agents: `docs/conventions/writing.md`
 - HTML, CSS and browser features: `docs/conventions/web-platform.md`
-- Layout, colour, accessibility and Vue components: `docs/conventions/ui.md`
+- Layout, colour and accessibility: `docs/conventions/ui.md`
+- Vue components, state and composables: `docs/conventions/vue.md`
 - Tests: `docs/conventions/testing.md`
 
 The skills in `.claude/skills/` say when each file applies. `.claude/skills/README.md` lists their sources.

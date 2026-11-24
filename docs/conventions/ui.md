@@ -2,9 +2,10 @@
 
 Adapted from `nextlevelbuilder/ui-ux-pro-max-skill` at commit `cc7b20d` (MIT). Rewritten for this repository.
 
-Taken from the source: the web rules in `quick-reference.md`, the Vue rows in `vue.csv`, and two product rows.
+Taken from the source: the web rules in `quick-reference.md` and two product rows.
 The product rows are "Knowledge Base / Documentation" and "E-signature / Document Workflow".
-Not taken: the native app rules, the chart, landing page and motion data, and the font list.
+Not taken: the native app rules, the chart, landing page and motion data, the font list and the Vue rows.
+The rules for Vue code are in `docs/conventions/vue.md`.
 
 ## Direction
 
@@ -50,16 +51,6 @@ A test reads the token file and checks the contrast of each text and background 
 | `--neutral-text`, `--neutral-bg` | Draft and formatting changes |
 
 Check the dark theme by itself. Do not assume that light values carry over.
-
-## Vue components
-
-- Use `<script setup lang="ts">` with typed `defineProps` and `defineEmits`.
-- Use `computed` for a value that comes from other state.
-- Hold the parsed document in `shallowRef`. The tree is large and never changes in place.
-- Give each item in a list a stable key from its node id. Never use the index.
-- Never put `v-if` and `v-for` on the same element. Filter in a `computed`.
-- Remove each listener and observer in `onUnmounted`.
-- A composable has a `use` name and returns refs.
 
 ## Do not
 

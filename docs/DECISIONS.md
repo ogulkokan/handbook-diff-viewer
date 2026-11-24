@@ -62,7 +62,10 @@ Vue renders the tokens as text. Only bold and `http` or `https` links keep their
 **Decision.** No store, no router, no UI kit, no CSS framework and no comparison library.
 One function for the longest common subsequence serves the word comparison and the reorder rule.
 **Rejected.** The `diff` package. It is a fair choice, but the function is about 25 lines and has tests.
+**Rejected.** `@vueuse/core`. Each need was checked against its function, and the table is in `docs/conventions/vue.md`.
+Two functions hide a result that this app must show, and the one that fits saves about 8 lines.
 **Consequence.** If the word comparison reads badly in the browser, `diff` replaces the function in one commit.
+If the code for one browser need grows past about 40 lines, one VueUse function replaces it, with a line in `README.md`.
 
 ## D9 — Baseline Widely available
 
@@ -87,10 +90,11 @@ One function for the longest common subsequence serves the word comparison and t
 
 ## D12 — Outside guidance is distilled, not installed
 
-**Context.** Four public skill sets have rules that fit this app. One of them installs about 190 files.
+**Context.** Five public skill sets have rules that fit this app. One of them installs about 190 files.
 **Decision.** Each source becomes one file in `docs/conventions/` and one thin skill that points to it.
 **Rejected.** To install the sets. Most of their content is for other kinds of work.
-**Consequence.** `.claude/skills/README.md` says what was kept and what was dropped from each source.
+**Consequence.** `.claude/skills/README.md` links each source at the commit that was read.
+It says what was kept and what was dropped, and it lists the sources that were read and not used.
 
 ## D13 — TypeScript 6, not 7
 

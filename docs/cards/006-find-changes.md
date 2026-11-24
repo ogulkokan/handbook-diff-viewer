@@ -11,6 +11,7 @@ docs:
   - docs/SPEC.md
   - docs/conventions/web-platform.md
   - docs/conventions/ui.md
+  - docs/conventions/vue.md
 ---
 
 # Card 006: find changes

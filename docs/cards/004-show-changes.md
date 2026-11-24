@@ -11,6 +11,7 @@ depends_on: ["003"]
 docs:
   - docs/SPEC.md
   - docs/conventions/ui.md
+  - docs/conventions/vue.md
   - docs/conventions/writing.md
   - .claude/skills/ui-review/SKILL.md
 ---
