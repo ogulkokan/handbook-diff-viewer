@@ -1,6 +1,8 @@
 import { indexDocument, type DocumentIndex, type IndexEntry } from './indexTree'
 import { lcsPairs } from './lcs'
 import { isFormattingOnly } from './normalize'
+import { plainText } from './text'
+import { diffWords, type TextPart } from './textDiff'
 import type { DocNode, HandbookDocument, NodeType } from './types'
 
 export type ChangeKind = 'added' | 'removed' | 'edited' | 'moved' | 'reordered'
@@ -15,6 +17,8 @@ export interface Edit {
   after: string | undefined
   /** True when only whitespace or the format of a number differs (D5). */
   formatting: boolean
+  /** For the text of a paragraph that is in both versions: the words that differ. */
+  parts?: TextPart[]
 }
 
 interface ChangeOf<K extends ChangeKind> {
@@ -49,11 +53,41 @@ export type ReorderedChange = ChangeOf<'reordered'>
 
 export type Change = AddedChange | RemovedChange | EditedChange | MovedChange | ReorderedChange
 
+/** One node as the reader of a comparison sees it. */
+export interface ViewNode {
+  kind: 'node'
+  node: DocNode
+  /**
+   * "both": the node is in the two versions. "added" and "removed" also hold for each node
+   * below an added or removed top node, which has no change of its own.
+   */
+  presence: 'both' | 'added' | 'removed'
+  /** The changes of this node itself, not of the nodes below it. */
+  changes: Change[]
+  children: ViewItem[]
+}
+
+/** Stands at the earlier place of a node that moved to another parent. */
+export interface MovedAwayMarker {
+  kind: 'moved-away'
+  node: DocNode
+  toParentId: string | null
+}
+
+export type ViewItem = ViewNode | MovedAwayMarker
+
 export interface Comparison {
   base: HandbookDocument
   target: HandbookDocument
+  baseIndex: DocumentIndex
+  targetIndex: DocumentIndex
   /** In document order: the order in which a reader meets them in the target version. */
   changes: Change[]
+  /**
+   * The target version with the removed nodes put back at their earlier place (D1).
+   * A walk of this tree meets the changes in the order of "changes".
+   */
+  tree: ViewItem[]
 }
 
 type Children = Map<string | null, DocNode[]>
@@ -110,7 +144,11 @@ function editsBetween(base: DocNode, target: DocNode): Edit[] {
     if (earlier === after) continue
     const formatting =
       earlier !== undefined && after !== undefined && isFormattingOnly(earlier, after)
-    edits.push({ part, before: earlier, after, formatting })
+    const edit: Edit = { part, before: earlier, after, formatting }
+    if (part === 'text' && earlier !== undefined && after !== undefined) {
+      edit.parts = diffWords(plainText(earlier), plainText(after))
+    }
+    edits.push(edit)
   }
   return edits
 }
@@ -149,70 +187,108 @@ export function diffDocuments(base: HandbookDocument, target: HandbookDocument):
   }
   const reordered = reorderedIds()
 
+  type Place = 'target' | 'removed' | 'moved-away'
+
   // The children of one node as a reader of the comparison sees them: the target children in
-  // their order, and each removed child after the sibling that came before it in the base.
-  function mergedChildren(parentId: string | null): Array<{ node: DocNode; removed: boolean }> {
-    const merged = (targetChildren.get(parentId) ?? []).map((node) => ({ node, removed: false }))
+  // their order, and each base child that is gone from here after the sibling that came before it.
+  function mergedChildren(parentId: string | null): Array<{ node: DocNode; place: Place }> {
+    const merged: Array<{ node: DocNode; place: Place }> = (targetChildren.get(parentId) ?? []).map(
+      (node) => ({ node, place: 'target' }),
+    )
     let insertAt = 0
     for (const child of baseChildren.get(parentId) ?? []) {
-      const inTarget = merged.findIndex((item) => !item.removed && item.node.id === child.id)
+      const inTarget = merged.findIndex(
+        (item) => item.place === 'target' && item.node.id === child.id,
+      )
       if (inTarget !== -1) {
         insertAt = inTarget + 1
-      } else if (!targetIndex.byId.has(child.id)) {
-        merged.splice(insertAt, 0, { node: child, removed: true })
-        insertAt++
+        continue
       }
+      const place = targetIndex.byId.has(child.id) ? 'moved-away' : 'removed'
+      merged.splice(insertAt, 0, { node: child, place })
+      insertAt++
     }
     return merged
   }
 
-  function visitKept(node: DocNode, parentId: string | null, earlier: IndexEntry): void {
-    const common = { nodeId: node.id, nodeType: node.type }
-    if (earlier.parentId !== parentId) {
-      changes.push({
-        kind: 'moved',
-        ...common,
-        fromParentId: earlier.parentId,
-        toParentId: parentId,
-      })
+  function movedAway(node: DocNode): MovedAwayMarker {
+    return {
+      kind: 'moved-away',
+      node,
+      toParentId: targetIndex.byId.get(node.id)?.parentId ?? null,
     }
-    if (reordered.has(node.id)) changes.push({ kind: 'reordered', ...common })
+  }
+
+  function keptNode(node: DocNode, parentId: string | null, earlier: IndexEntry): ViewNode {
+    const common = { nodeId: node.id, nodeType: node.type }
+    const own: Change[] = []
+    if (earlier.parentId !== parentId) {
+      own.push({ kind: 'moved', ...common, fromParentId: earlier.parentId, toParentId: parentId })
+    }
+    if (reordered.has(node.id)) own.push({ kind: 'reordered', ...common })
     const edits = editsBetween(earlier.node, node)
     if (edits.length > 0) {
       const formatting = edits.every((edit) => edit.formatting)
-      changes.push({ kind: 'edited', ...common, edits, formatting })
+      own.push({ kind: 'edited', ...common, edits, formatting })
     }
-    if ('children' in node) visit(node.id)
+    // The changes of a node come before the changes of its children: document order.
+    changes.push(...own)
+    const children = 'children' in node ? visit(node.id) : []
+    return { kind: 'node', node, presence: 'both', changes: own, children }
   }
 
-  // An added node is one change. A node below it that the base version holds moved into it:
-  // that node gets its own changes, and the walk goes on from there.
-  function visitAdded(node: DocNode): void {
-    if (!('children' in node)) return
-    for (const child of node.children) {
-      const earlier = baseIndex.byId.get(child.id)
-      if (earlier) visitKept(child, node.id, earlier)
-      else visitAdded(child)
+  // An added node is one change, at its top node. A node below it that the base version holds
+  // moved into it: that node gets its own changes, and the walk goes on from there.
+  function addedNode(node: DocNode, isTop: boolean): ViewNode {
+    const own: Change[] = []
+    if (isTop) {
+      own.push({
+        kind: 'added',
+        nodeId: node.id,
+        nodeType: node.type,
+        size: sizeOf(node, baseIndex),
+      })
+      changes.push(...own)
     }
+    const children = !('children' in node)
+      ? []
+      : node.children.map((child) => {
+          const earlier = baseIndex.byId.get(child.id)
+          return earlier ? keptNode(child, node.id, earlier) : addedNode(child, false)
+        })
+    return { kind: 'node', node, presence: 'added', changes: own, children }
   }
 
-  function visit(parentId: string | null): void {
-    for (const { node, removed } of mergedChildren(parentId)) {
-      const common = { nodeId: node.id, nodeType: node.type }
-      if (removed) {
-        changes.push({ kind: 'removed', ...common, size: sizeOf(node, targetIndex) })
-        continue
-      }
+  // A removed node is one change, at its top node. A node below it that the target version
+  // holds moved out: a marker stands at its earlier place.
+  function removedNode(node: DocNode, isTop: boolean): ViewNode {
+    const own: Change[] = []
+    if (isTop) {
+      own.push({
+        kind: 'removed',
+        nodeId: node.id,
+        nodeType: node.type,
+        size: sizeOf(node, targetIndex),
+      })
+      changes.push(...own)
+    }
+    const children = !('children' in node)
+      ? []
+      : node.children.map((child) =>
+          targetIndex.byId.has(child.id) ? movedAway(child) : removedNode(child, false),
+        )
+    return { kind: 'node', node, presence: 'removed', changes: own, children }
+  }
+
+  function visit(parentId: string | null): ViewItem[] {
+    return mergedChildren(parentId).map(({ node, place }) => {
+      if (place === 'moved-away') return movedAway(node)
+      if (place === 'removed') return removedNode(node, true)
       const earlier = baseIndex.byId.get(node.id)
-      if (earlier) {
-        visitKept(node, parentId, earlier)
-      } else {
-        changes.push({ kind: 'added', ...common, size: sizeOf(node, baseIndex) })
-        visitAdded(node)
-      }
-    }
+      return earlier ? keptNode(node, parentId, earlier) : addedNode(node, true)
+    })
   }
 
-  visit(null)
-  return { base, target, changes }
+  const tree = visit(null)
+  return { base, target, baseIndex, targetIndex, changes, tree }
 }

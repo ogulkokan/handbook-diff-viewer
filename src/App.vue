@@ -1,23 +1,32 @@
 <script setup lang="ts">
-import { computed, ref, useTemplateRef, watch } from 'vue'
+import { computed, useTemplateRef, watch } from 'vue'
 
+import ChangeList from '@/components/ChangeList.vue'
 import DocumentView from '@/components/DocumentView.vue'
 import OutlineTree from '@/components/OutlineTree.vue'
+import { provideComparison } from '@/composables/comparisonContext'
+import { useComparison } from '@/composables/useComparison'
 import { useScrollSpy } from '@/composables/useScrollSpy'
 import { useVersions } from '@/composables/useVersions'
 import type { ClauseNode, SectionNode } from '@/domain/types'
 
 const { documents, error, isLoading } = useVersions()
+const {
+  base,
+  target,
+  baseOptions,
+  targetOptions,
+  comparison,
+  tree,
+  changes,
+  counts,
+  formattingCount,
+  showFormatting,
+  chooseBase,
+  chooseTarget,
+} = useComparison(documents)
 
-const chosenVersion = ref<number | null>(null)
-
-// Until the reader chooses, the app shows the latest version.
-const current = computed(
-  () =>
-    documents.value.find((document) => document.version === chosenVersion.value) ??
-    documents.value.at(-1) ??
-    null,
-)
+provideComparison(comparison)
 
 function sectionIds(nodes: ReadonlyArray<SectionNode | ClauseNode>): string[] {
   return nodes.flatMap((node) =>
@@ -25,13 +34,13 @@ function sectionIds(nodes: ReadonlyArray<SectionNode | ClauseNode>): string[] {
   )
 }
 
-const { activeId } = useScrollSpy(() => (current.value ? sectionIds(current.value.children) : []))
+const { activeId } = useScrollSpy(() => (target.value ? sectionIds(target.value.children) : []))
 
-// The outline is longer than the screen. Keep the marked item in view inside the panel.
-// scrollIntoView would also scroll the page, so only the panel's own scroll position changes.
-const panel = useTemplateRef('panel')
+// The outline is longer than the screen. Keep the marked item in view inside its own list.
+// scrollIntoView would also scroll the page, so only the scroll position of the list changes.
+const outline = useTemplateRef('outline')
 watch(activeId, (id) => {
-  const box = panel.value
+  const box = outline.value
   if (id === null || !box || box.scrollHeight <= box.clientHeight) return
   const link = box.querySelector(`a[href="#${CSS.escape(id)}"]`)
   if (!link) return
@@ -41,34 +50,91 @@ watch(activeId, (id) => {
   if (linkRect.top < boxRect.top) box.scrollTop -= boxRect.top - linkRect.top
   else if (linkRect.bottom > boxRect.bottom) box.scrollTop += linkRect.bottom - boxRect.bottom
 })
+
+const versionOf = (event: Event) => Number((event.target as HTMLSelectElement).value)
+
+const changeCountText = computed(() =>
+  changes.value.length === 1 ? '1 change' : `${changes.value.length} changes`,
+)
+const formattingText = computed(() => {
+  const count = formattingCount.value
+  const subject = count === 1 ? '1 formatting change is' : `${count} formatting changes are`
+  return `${subject} ${showFormatting.value ? 'shown' : 'hidden'}.`
+})
 </script>
 
 <template>
   <header class="bar">
-    <h1 class="bar__title">{{ current?.title ?? 'Handbook diff viewer' }}</h1>
+    <h1 class="bar__title">{{ target?.title ?? 'Handbook diff viewer' }}</h1>
 
-    <label v-if="current" class="bar__field">
-      <span>Version</span>
-      <select
-        :value="current.version"
-        @change="chosenVersion = Number(($event.target as HTMLSelectElement).value)"
+    <template v-if="target">
+      <div class="bar__group">
+        <label class="bar__field">
+          <span>Compare<span class="sr-only"> base version</span></span>
+          <select
+            :value="base?.version"
+            :disabled="baseOptions.length === 0"
+            @change="chooseBase(versionOf($event))"
+          >
+            <option
+              v-for="document in baseOptions"
+              :key="document.version"
+              :value="document.version"
+            >
+              Version {{ document.version }} ({{ document.updatedAt }})
+            </option>
+          </select>
+        </label>
+        <label class="bar__field">
+          <span>with<span class="sr-only"> target version</span></span>
+          <select :value="target.version" @change="chooseTarget(versionOf($event))">
+            <option
+              v-for="document in targetOptions"
+              :key="document.version"
+              :value="document.version"
+            >
+              Version {{ document.version }} ({{ document.updatedAt }})
+            </option>
+          </select>
+        </label>
+      </div>
+
+      <!-- One polite live region: a new count is read as a full phrase (ui.md rule 9). -->
+      <p class="bar__summary" role="status">
+        <strong>{{ changeCountText }}</strong>
+        <!-- The space is part of the text, so a template formatter cannot drop it. -->
+        <span v-if="formattingCount > 0">{{ ` ${formattingText}` }}</span>
+      </p>
+
+      <button
+        v-if="formattingCount > 0"
+        class="bar__toggle"
+        type="button"
+        :aria-pressed="showFormatting"
+        @click="showFormatting = !showFormatting"
       >
-        <option v-for="document in documents" :key="document.version" :value="document.version">
-          Version {{ document.version }} ({{ document.updatedAt }})
-        </option>
-      </select>
-    </label>
+        Show formatting changes
+      </button>
+    </template>
   </header>
 
   <p v-if="isLoading" class="notice" role="status">The document is loading.</p>
   <p v-else-if="error" class="notice" role="alert">The document did not load. {{ error }}</p>
 
-  <div v-else-if="current" class="layout">
-    <nav ref="panel" class="panel" aria-label="Outline">
-      <OutlineTree :nodes="current.children" :active-id="activeId" />
-    </nav>
+  <div v-else-if="target && comparison" class="layout">
+    <aside class="panel">
+      <!-- Two lists, each with its own scroll: the change list stays in view while the outline moves. -->
+      <nav class="panel__list panel__list--changes" aria-labelledby="changes-heading">
+        <h2 id="changes-heading" class="panel__heading">Changes</h2>
+        <ChangeList :changes="changes" :comparison="comparison" />
+      </nav>
+      <nav ref="outline" class="panel__list panel__list--outline" aria-label="Outline">
+        <h2 class="panel__heading">Outline</h2>
+        <OutlineTree :nodes="target.children" :active-id="activeId" :counts="counts" />
+      </nav>
+    </aside>
     <main class="reading">
-      <DocumentView :document="current" />
+      <DocumentView :tree="tree" />
     </main>
   </div>
 </template>
@@ -80,11 +146,13 @@ watch(activeId, (id) => {
   z-index: 10;
   display: flex;
   align-items: center;
-  gap: var(--space-5);
+  gap: var(--space-4);
   block-size: var(--bar-height);
   padding-inline: var(--space-4);
   background: var(--bg);
   border-block-end: 1px solid var(--border);
+  font-size: var(--text-sm);
+  white-space: nowrap;
 }
 
 .bar__title {
@@ -93,21 +161,49 @@ watch(activeId, (id) => {
   font-weight: 650;
 }
 
+.bar__group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
 .bar__field {
   display: flex;
   align-items: center;
   gap: var(--space-2);
   color: var(--muted);
-  font-size: var(--text-sm);
 }
 
-.bar__field select {
+.bar__field select,
+.bar__toggle {
   padding: var(--space-1) var(--space-2);
   border: 1px solid var(--border-control);
   border-radius: var(--radius);
   background: var(--bg);
   color: var(--text);
   font: inherit;
+}
+
+.bar__summary {
+  margin: 0;
+  margin-inline-start: auto;
+  color: var(--muted);
+}
+
+.bar__summary strong {
+  color: var(--text);
+}
+
+.bar__toggle {
+  cursor: pointer;
+}
+
+/* The pressed state has a filled background and a thicker edge, not only another colour. */
+.bar__toggle[aria-pressed='true'] {
+  background: var(--neutral-bg);
+  color: var(--neutral-text);
+  box-shadow: inset 0 0 0 1px var(--border-control);
+  font-weight: 600;
 }
 
 .notice {
@@ -123,11 +219,36 @@ watch(activeId, (id) => {
   position: sticky;
   inset-block-start: var(--bar-height);
   align-self: start;
+  display: flex;
+  flex-direction: column;
   block-size: calc(100vh - var(--bar-height));
-  overflow-y: auto;
-  padding: var(--space-4) var(--space-2);
   border-inline-end: 1px solid var(--border);
   font-size: var(--text-sm);
+}
+
+.panel__list {
+  min-block-size: 0;
+  overflow-y: auto;
+  padding: 0 var(--space-2) var(--space-2);
+}
+
+.panel__list--changes {
+  flex: 0 1 auto;
+  max-block-size: 45%;
+  border-block-end: 1px solid var(--border);
+}
+
+.panel__list--outline {
+  flex: 1 1 0;
+}
+
+.panel__heading {
+  margin: var(--space-3) var(--space-2) var(--space-1);
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .reading {
@@ -135,6 +256,14 @@ watch(activeId, (id) => {
 }
 
 @media (max-width: 900px) {
+  .bar {
+    block-size: auto;
+    min-block-size: var(--bar-height);
+    flex-wrap: wrap;
+    padding-block: var(--space-2);
+    white-space: normal;
+  }
+
   .layout {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -142,9 +271,16 @@ watch(activeId, (id) => {
   .panel {
     position: static;
     block-size: auto;
-    max-block-size: 40vh;
     border-inline-end: 0;
     border-block-end: 1px solid var(--border);
+  }
+
+  .panel__list {
+    max-block-size: 30vh;
+  }
+
+  .panel__list--outline {
+    flex: none;
   }
 }
 </style>
