@@ -25,6 +25,7 @@
   --bar-height: 48px;
   --panel-width: 260px;
   --radius: 4px;
+  --radius-sm: 2px;
 
   --bg: #ffffff;
   --surface: #f8fafc;
@@ -33,6 +34,18 @@
   --border: #e2e8f0;
   --border-control: #64748b;
   --accent: #1d4ed8;
+
+  /* One pair for each change kind: the text colour on its own background. */
+  --added-text: #166534;
+  --added-bg: #dcfce7;
+  --removed-text: #991b1b;
+  --removed-bg: #fee2e2;
+  --edited-text: #92400e;
+  --edited-bg: #fef3c7;
+  --moved-text: #5b21b6;
+  --moved-bg: #ede9fe;
+  --neutral-text: #334155;
+  --neutral-bg: #f1f5f9;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -44,5 +57,16 @@
     --border: #1f2937;
     --border-control: #94a3b8;
     --accent: #93c5fd;
+
+    --added-text: #86efac;
+    --added-bg: #0b2e1a;
+    --removed-text: #fca5a5;
+    --removed-bg: #3b1219;
+    --edited-text: #fcd34d;
+    --edited-bg: #3a2a0a;
+    --moved-text: #c4b5fd;
+    --moved-bg: #2a1b4d;
+    --neutral-text: #cbd5e1;
+    --neutral-bg: #1e293b;
   }
 }
