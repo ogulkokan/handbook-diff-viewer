@@ -1,4 +1,4 @@
-import type { Change, Comparison, Edit, ViewItem } from './diff'
+import type { Change, Comparison, Edit, ViewItem, ViewNode } from './diff'
 import type { DocNode } from './types'
 
 /** True for an edit that changes only whitespace or the format of a number (D5). */
@@ -76,4 +76,52 @@ export function editOf(changes: readonly Change[], part: Edit['part']): Edit | u
     if (edit) return edit
   }
   return undefined
+}
+
+/** One item of a list as "Changes only" shows it: a node on its own, or a run of unchanged nodes. */
+export type Folded =
+  { fold: false; item: ViewItem } | { fold: true; key: string; items: ViewNode[]; label: string }
+
+function runLabel(items: readonly ViewNode[]): string {
+  const count = (type: DocNode['type'], one: string, many: string) => {
+    const n = items.filter((item) => item.node.type === type).length
+    return n === 0 ? [] : [`${n} unchanged ${n === 1 ? one : many}`]
+  }
+  return [
+    ...count('section', 'section', 'sections'),
+    ...count('clause', 'clause', 'clauses'),
+    ...count('field', 'field', 'fields'),
+    ...count('paragraph', 'paragraph', 'paragraphs'),
+  ].join(' and ')
+}
+
+/**
+ * Groups each run of neighbours that hold no change, themselves or below them, into one fold (D10).
+ * A node with a change and a moved-away marker stay on their own, in their place.
+ * `counts` is the result of changeCounts for the same tree.
+ */
+export function foldUnchanged(
+  items: readonly ViewItem[],
+  counts: ReadonlyMap<string, number>,
+): Folded[] {
+  const result: Folded[] = []
+  for (const item of items) {
+    if (item.kind === 'moved-away' || counts.has(item.node.id)) {
+      result.push({ fold: false, item })
+      continue
+    }
+    const last = result.at(-1)
+    if (last?.fold) {
+      last.items.push(item)
+      last.label = runLabel(last.items)
+    } else {
+      result.push({
+        fold: true,
+        key: `fold-${item.node.id}`,
+        items: [item],
+        label: runLabel([item]),
+      })
+    }
+  }
+  return result
 }
