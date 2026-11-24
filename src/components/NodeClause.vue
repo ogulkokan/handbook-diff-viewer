@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { useIsSelected } from '@/composables/comparisonContext'
+import { useIsSelected, useViewContext } from '@/composables/comparisonContext'
 import type { MovedAwayMarker, ViewNode } from '@/domain/diff'
 import { editOf } from '@/domain/view'
 import ChangeBadge from './ChangeBadge.vue'
@@ -19,6 +19,9 @@ const { item, level } = defineProps<{
 }>()
 
 const selected = useIsSelected(() => item.node.id)
+const { counts } = useViewContext()
+// A clause in both versions that holds a change, in itself or in a field or a paragraph.
+const holdsChange = computed(() => item.presence === 'both' && counts.value.has(item.node.id))
 
 const clause = computed(() => {
   if (item.node.type !== 'clause') throw new Error(`NodeClause got a ${item.node.type}`)
@@ -54,7 +57,10 @@ const blocks = computed<Block[]>(() => {
   <article
     :id="clause.id"
     class="clause"
-    :class="[`clause--${item.presence}`, { 'is-selected': selected }]"
+    :class="[
+      `clause--${item.presence}`,
+      { 'clause--changed': holdsChange, 'is-selected': selected },
+    ]"
     tabindex="-1"
     :aria-labelledby="`${clause.id}-title`"
   >
@@ -107,6 +113,11 @@ const blocks = computed<Block[]>(() => {
 
 .clause__fields {
   margin: 0 0 var(--space-2);
+}
+
+/* The same edge as an added or a removed clause, so a changed clause shows at a glance. */
+.clause--changed {
+  border-inline-start-color: var(--edited-text);
 }
 
 .clause--added {

@@ -25,6 +25,7 @@
   --label-width: 10rem;
   --bar-height: 48px;
   --panel-width: 260px;
+  --changes-width: 320px;
   /* Room below the last section, so that a jump can put it near the top. */
   --end-room: 50vh;
   --radius: 4px;
@@ -73,5 +74,13 @@
     --moved-bg: #2a1b4d;
     --neutral-text: #cbd5e1;
     --neutral-bg: #1e293b;
+  }
+}
+
+/* Below three columns the top bar has two rows. The sticky panels and the jump targets
+   take their offset from this height. */
+@media (max-width: 1199px) {
+  :root {
+    --bar-height: 88px;
   }
 }

@@ -357,3 +357,27 @@ describe('App: the place of the reader', () => {
     expect(summary(wrapper)).toBe('11 changes 2 formatting changes are hidden.')
   })
 })
+
+describe('App: the change list says what changed', () => {
+  it('shows the path, the name and the part that changed', async () => {
+    const wrapper = await mountApp('/?base=1&target=2')
+    const entry = wrapper.get(
+      'nav[aria-labelledby="changes-heading"] a[href="#f-leave-annual-days"]',
+    )
+
+    // data/v2.json: "Days per year" in the clause "Annual leave" of the section "Leave".
+    expect(entry.text()).toContain('Leave / Annual leave')
+    expect(entry.text()).toContain('Days per year')
+    expect(entry.text()).toContain('Value changed')
+  })
+
+  it('gives a clause that holds a change an edge, and a clause with no change none', async () => {
+    const wrapper = await mountApp('/?base=1&target=2')
+
+    // v1 to v2 edits f-leave-annual-days in cl-leave-annual. cl-intro-purpose has no change.
+    expect(wrapper.get('#cl-leave-annual').classes()).toContain('clause--changed')
+    expect(wrapper.get('#cl-intro-purpose').classes()).not.toContain('clause--changed')
+    // An added clause keeps its own edge.
+    expect(wrapper.get('#cl-tool-cursor').classes()).not.toContain('clause--changed')
+  })
+})

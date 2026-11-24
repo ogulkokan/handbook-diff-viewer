@@ -169,8 +169,11 @@ const positionText = computed(() =>
   <p v-else-if="error" class="notice" role="alert">The document did not load. {{ error }}</p>
 
   <div v-else-if="target && comparison" class="layout">
-    <aside class="panel">
-      <!-- Two lists, each with its own scroll: the change list stays in view while the outline moves. -->
+    <!--
+      Two lists, each with its own scroll. On a wide window the outline is the left column and
+      the change list is the right column. On a narrow one they share the left panel.
+    -->
+    <div class="panel">
       <nav class="panel__list panel__list--changes" aria-labelledby="changes-heading">
         <h2 id="changes-heading" class="panel__heading">Changes</h2>
         <p v-if="formattingCount > 0" class="panel__formatting">
@@ -190,7 +193,7 @@ const positionText = computed(() =>
         <h2 class="panel__heading">Outline</h2>
         <OutlineTree :nodes="target.children" :active-id="activeId" :counts="counts" />
       </nav>
-    </aside>
+    </div>
     <main class="reading">
       <DocumentView :tree="tree" />
     </main>
@@ -337,13 +340,58 @@ const positionText = computed(() =>
   padding-block-end: var(--end-room);
 }
 
+/* Room for three columns: the outline, the text and the change list. */
+@media (min-width: 1200px) {
+  .layout {
+    grid-template-columns: var(--panel-width) minmax(0, 1fr) var(--changes-width);
+  }
+
+  /* The panel gives its two lists to the grid, one for each side column. */
+  .panel {
+    display: contents;
+  }
+
+  .panel__list {
+    position: sticky;
+    inset-block-start: var(--bar-height);
+    align-self: start;
+    grid-row: 1;
+    block-size: calc(100vh - var(--bar-height));
+    max-block-size: none;
+  }
+
+  .panel__list--outline {
+    grid-column: 1;
+    border-inline-end: 1px solid var(--border);
+  }
+
+  .reading {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .panel__list--changes {
+    grid-column: 3;
+    border-block-end: 0;
+    border-inline-start: 1px solid var(--border);
+  }
+}
+
+/* Below three columns the controls of the top bar need two rows. tokens.css gives the height. */
+@media (max-width: 1199px) {
+  .bar {
+    flex-wrap: wrap;
+    align-content: center;
+    row-gap: var(--space-2);
+    white-space: normal;
+  }
+}
+
 @media (max-width: 900px) {
   .bar {
     block-size: auto;
     min-block-size: var(--bar-height);
-    flex-wrap: wrap;
     padding-block: var(--space-2);
-    white-space: normal;
   }
 
   .layout {

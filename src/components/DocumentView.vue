@@ -14,5 +14,7 @@ defineProps<{ tree: readonly ViewItem[] }>()
 <style scoped>
 .document {
   max-inline-size: var(--document-width);
+  /* On a wide window the text stands in the middle of its column. */
+  margin-inline: auto;
 }
 </style>
