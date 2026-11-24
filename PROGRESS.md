@@ -7,12 +7,15 @@ Say what changed, not what was tried.
 
 ## Current focus
 
-- **Now:** A reader opens one version and moves through it with the outline.
-- **Prev:** Card 002, read one version.
-- **Next:** Card 003, `docs/cards/003-diff-engine.md`.
+- **Now:** The engine finds each change between two versions. No UI shows it yet.
+- **Prev:** Card 003, diff engine.
+- **Next:** Card 004, `docs/cards/004-show-changes.md`.
 - **Last updated:** 2026-11-24
 
 ## Log
+
+- **Card 003** (2026-11-24): `diffDocuments` reports added, removed, edited, moved and reordered nodes in document order.
+  Formatting changes have their own flag. `diffWords` marks the words that changed. Built test first, 50 tests.
 
 - **Card 002** (2026-11-24): the three versions load and pass a shape check. The document shows with real headings.
   The outline jumps to a section or a clause and marks the section in view.
