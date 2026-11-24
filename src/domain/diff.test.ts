@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { diffDocuments, type Change, type ChangeKind } from './diff'
 import { v1, v2, v3 } from './fixtures'
 import { indexDocument } from './indexTree'
+import { parseDocument } from './parseDocument'
 
 // Every expected id below comes from "Expected changes" in docs/SPEC.md,
 // which was counted by hand from the three data files.
@@ -235,9 +236,24 @@ describe('diffDocuments: any two versions (D2)', () => {
     ])
     expect(idsOf(changes, 'moved')).toEqual(['cl-hours-holidays'])
     expect(idsOf(changes, 'reordered')).toHaveLength(1)
+    expect(['cl-comms-channels', 'cl-comms-meetings']).toContain(idsOf(changes, 'reordered')[0])
     expect(edited(changes, true)).toEqual(['f-exp-equipment-limit', 'p-leave-sick-1'])
-    // The 5 real edits of v1 to v2 and the 8 of v2 to v3.
-    expect(edited(changes, false)).toHaveLength(13)
+    // The 5 real edits of v1 to v2 and the 8 of v2 to v3, from docs/SPEC.md.
+    expect(edited(changes, false)).toEqual([
+      'f-comms-response',
+      'f-hours-overtime-max',
+      'f-intro-reviewed',
+      'f-leave-annual-days',
+      'f-tool-chatgpt-status',
+      'f-tool-claude-vendor',
+      'f-tool-dropbox-status',
+      'f-tool-grammarly-status',
+      'f-tool-zapier-status',
+      'f-travel-hotel-limit',
+      'p-exp-reimbursement-1',
+      'p-travel-flights-1',
+      'sec-hours',
+    ])
   })
 })
 
@@ -279,5 +295,67 @@ describe('diffDocuments: totals that the reader sees', () => {
 
     expect(visible(changes)).toHaveLength(10)
     expect(changes).toHaveLength(10)
+  })
+})
+
+// Small documents for cases that the three data files do not hold.
+function documentOf(children: unknown[]) {
+  return parseDocument({ id: 'doc', version: 1, title: 'T', updatedAt: '2026-01-01', children })
+}
+const section = (id: string, children: unknown[]) => ({ id, type: 'section', title: id, children })
+const clause = (id: string, children: unknown[] = []) => ({
+  id,
+  type: 'clause',
+  title: id,
+  children,
+})
+const field = (id: string, value: string) => ({ id, type: 'field', label: id, value })
+
+describe('diffDocuments: a node that changes parent together with an added or removed parent', () => {
+  it('reports a clause that moves into a new section as moved, with its edit', () => {
+    const base = documentOf([section('s1', [clause('c1'), clause('c2', [field('f2', 'old')])])])
+    const target = documentOf([
+      section('s1', [clause('c1')]),
+      section('s2', [clause('c2', [field('f2', 'new')])]),
+    ])
+
+    const changes = diffDocuments(base, target).changes
+
+    // Only s2 itself is new. c2 and f2 exist in the base version.
+    expect(one(changes, 's2', 'added')).toMatchObject({ size: 1 })
+    expect(one(changes, 'c2', 'moved')).toMatchObject({ fromParentId: 's1', toParentId: 's2' })
+    expect(one(changes, 'f2', 'edited')).toMatchObject({
+      edits: [{ part: 'value', before: 'old', after: 'new' }],
+    })
+    expect(changes).toHaveLength(3)
+  })
+
+  it('counts in a removed section only the nodes that are gone', () => {
+    const base = documentOf([
+      section('s1', [clause('c1')]),
+      section('s2', [clause('c2', [field('f2', 'same')]), clause('c3')]),
+    ])
+    const target = documentOf([section('s1', [clause('c1'), clause('c2', [field('f2', 'same')])])])
+
+    const changes = diffDocuments(base, target).changes
+
+    // s2 and c3 are gone. c2 and f2 moved to s1 and still exist.
+    expect(one(changes, 's2', 'removed')).toMatchObject({ size: 2 })
+    expect(one(changes, 'c2', 'moved')).toMatchObject({ fromParentId: 's2', toParentId: 's1' })
+    expect(changes).toHaveLength(2)
+  })
+
+  it('reports a new field inside a clause that moved into a new section', () => {
+    const base = documentOf([section('s1', [clause('c1'), clause('c2')])])
+    const target = documentOf([
+      section('s1', [clause('c1')]),
+      section('s2', [clause('c2', [field('f-new', 'x')])]),
+    ])
+
+    const changes = diffDocuments(base, target).changes
+
+    expect(one(changes, 's2', 'added')).toMatchObject({ size: 1 })
+    expect(one(changes, 'c2', 'moved')).toMatchObject({ toParentId: 's2' })
+    expect(one(changes, 'f-new', 'added')).toMatchObject({ size: 1 })
   })
 })
