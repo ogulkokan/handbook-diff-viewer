@@ -1,24 +1,50 @@
 <script setup lang="ts">
-import type { SectionNode } from '@/domain/types'
-import NodeClause from './NodeClause.vue'
+import { computed } from 'vue'
 
-defineProps<{
-  node: SectionNode
+import type { ViewNode } from '@/domain/diff'
+import { editOf } from '@/domain/view'
+import MovedAwayNote from './MovedAwayNote.vue'
+import NodeBadges from './NodeBadges.vue'
+import NodeClause from './NodeClause.vue'
+import TextChange from './TextChange.vue'
+
+const { item, level } = defineProps<{
+  item: ViewNode
   /** The heading level of the title, from 2 to 5. */
   level: number
 }>()
+
+const section = computed(() => {
+  if (item.node.type !== 'section') throw new Error(`NodeSection got a ${item.node.type}`)
+  return item.node
+})
+const titleEdit = computed(() => editOf(item.changes, 'title'))
 </script>
 
 <template>
   <!-- tabindex="-1": a jump from the outline can give the section focus. -->
-  <section :id="node.id" class="section" tabindex="-1" :aria-labelledby="`${node.id}-title`">
-    <component :is="`h${level}`" :id="`${node.id}-title`" class="section__title">
-      {{ node.title }}
+  <section
+    :id="section.id"
+    class="section"
+    :class="`section--${item.presence}`"
+    tabindex="-1"
+    :aria-labelledby="`${section.id}-title`"
+  >
+    <component :is="`h${level}`" :id="`${section.id}-title`" class="section__title">
+      <span class="section__name">
+        <TextChange v-if="titleEdit" :before="titleEdit.before" :after="titleEdit.after" />
+        <template v-else>{{ section.title }}</template>
+      </span>
+      <NodeBadges :changes="item.changes" />
     </component>
 
-    <template v-for="child in node.children" :key="child.id">
-      <NodeSection v-if="child.type === 'section'" :node="child" :level="level + 1" />
-      <NodeClause v-else :node="child" :level="level + 1" />
+    <template
+      v-for="child in item.children"
+      :key="child.kind === 'node' ? child.node.id : `marker-${child.node.id}`"
+    >
+      <MovedAwayNote v-if="child.kind === 'moved-away'" :marker="child" />
+      <NodeSection v-else-if="child.node.type === 'section'" :item="child" :level="level + 1" />
+      <NodeClause v-else :item="child" :level="level + 1" />
     </template>
   </section>
 </template>
@@ -26,6 +52,7 @@ defineProps<{
 <style scoped>
 .section {
   margin-block-end: var(--space-6);
+  border-inline-start: 3px solid transparent;
 }
 
 .section .section {
@@ -36,11 +63,25 @@ defineProps<{
 
 .section__title {
   margin: 0 0 var(--space-2);
+  padding-inline-start: var(--space-2);
   font-size: var(--text-lg);
   font-weight: 650;
 }
 
 .section .section .section__title {
   font-size: var(--text-md);
+}
+
+.section--added {
+  border-inline-start-color: var(--added-text);
+}
+
+.section--removed {
+  border-inline-start-color: var(--removed-text);
+}
+
+.section--removed > .section__title .section__name {
+  color: var(--removed-text);
+  text-decoration: line-through;
 }
 </style>

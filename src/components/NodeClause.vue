@@ -1,59 +1,89 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import { plainText } from '@/domain/text'
-import type { ClauseNode, FieldNode, ParagraphNode } from '@/domain/types'
+import type { MovedAwayMarker, ViewNode } from '@/domain/diff'
+import { editOf } from '@/domain/view'
+import ChangeBadge from './ChangeBadge.vue'
+import MovedAwayNote from './MovedAwayNote.vue'
+import NodeBadges from './NodeBadges.vue'
+import NodeField from './NodeField.vue'
+import NodeParagraph from './NodeParagraph.vue'
+import TextChange from './TextChange.vue'
 
-const { node, level } = defineProps<{
-  node: ClauseNode
+const { item, level } = defineProps<{
+  item: ViewNode
   /** The heading level of the title, from 3 to 6. */
   level: number
 }>()
 
+const clause = computed(() => {
+  if (item.node.type !== 'clause') throw new Error(`NodeClause got a ${item.node.type}`)
+  return item.node
+})
+const titleEdit = computed(() => editOf(item.changes, 'title'))
+const statusEdit = computed(() => editOf(item.changes, 'status'))
+
 type Block =
-  | { kind: 'fields'; key: string; fields: FieldNode[] }
-  | { kind: 'paragraph'; key: string; paragraph: ParagraphNode }
+  | { kind: 'fields'; key: string; fields: ViewNode[] }
+  | { kind: 'paragraph'; key: string; paragraph: ViewNode }
+  | { kind: 'marker'; key: string; marker: MovedAwayMarker }
 
 // Fields that follow each other form one description list. The display order stays the data order.
 const blocks = computed<Block[]>(() => {
   const result: Block[] = []
-  for (const child of node.children) {
-    if (child.type === 'paragraph') {
-      result.push({ kind: 'paragraph', key: child.id, paragraph: child })
-      continue
+  for (const child of item.children) {
+    if (child.kind === 'moved-away') {
+      result.push({ kind: 'marker', key: `marker-${child.node.id}`, marker: child })
+    } else if (child.node.type === 'paragraph') {
+      result.push({ kind: 'paragraph', key: child.node.id, paragraph: child })
+    } else {
+      const last = result.at(-1)
+      if (last?.kind === 'fields') last.fields.push(child)
+      else result.push({ kind: 'fields', key: child.node.id, fields: [child] })
     }
-    const last = result.at(-1)
-    if (last?.kind === 'fields') last.fields.push(child)
-    else result.push({ kind: 'fields', key: child.id, fields: [child] })
   }
   return result
 })
 </script>
 
 <template>
-  <article :id="node.id" class="clause" tabindex="-1" :aria-labelledby="`${node.id}-title`">
-    <component :is="`h${level}`" :id="`${node.id}-title`" class="clause__title">
-      {{ node.title }}
+  <article
+    :id="clause.id"
+    class="clause"
+    :class="`clause--${item.presence}`"
+    tabindex="-1"
+    :aria-labelledby="`${clause.id}-title`"
+  >
+    <component :is="`h${level}`" :id="`${clause.id}-title`" class="clause__title">
+      <span class="clause__name">
+        <TextChange v-if="titleEdit" :before="titleEdit.before" :after="titleEdit.after" />
+        <template v-else>{{ clause.title }}</template>
+      </span>
+      <ChangeBadge v-if="clause.status === 'draft'" class="clause__status" kind="draft" />
+      <span v-else-if="clause.status" class="clause__status">{{ clause.status }}</span>
+      <NodeBadges :changes="item.changes" />
     </component>
 
+    <p v-if="statusEdit" class="clause__status-change">
+      Status:
+      <TextChange :before="statusEdit.before ?? 'none'" :after="statusEdit.after ?? 'none'" />
+    </p>
+
     <template v-for="block in blocks" :key="block.key">
-      <dl v-if="block.kind === 'fields'" class="fields">
-        <div v-for="field in block.fields" :id="field.id" :key="field.id" class="fields__row">
-          <dt class="fields__label">{{ field.label }}</dt>
-          <dd class="fields__value">{{ field.value }}</dd>
-        </div>
+      <dl v-if="block.kind === 'fields'" class="clause__fields">
+        <NodeField v-for="field in block.fields" :key="field.node.id" :item="field" />
       </dl>
-      <p v-else :id="block.paragraph.id" class="clause__text">
-        {{ plainText(block.paragraph.text) }}
-      </p>
+      <NodeParagraph v-else-if="block.kind === 'paragraph'" :item="block.paragraph" />
+      <MovedAwayNote v-else :marker="block.marker" />
     </template>
   </article>
 </template>
 
 <style scoped>
 .clause {
-  padding-block: var(--space-3);
+  padding: var(--space-3) var(--space-2);
   border-block-start: 1px solid var(--border);
+  border-inline-start: 3px solid transparent;
 }
 
 .clause__title {
@@ -62,29 +92,31 @@ const blocks = computed<Block[]>(() => {
   font-weight: 600;
 }
 
-.clause__text {
+.clause__status {
+  margin-inline-start: var(--space-2);
+}
+
+.clause__status-change {
   margin: 0 0 var(--space-2);
-  max-inline-size: var(--measure);
-}
-
-.fields {
-  margin: 0 0 var(--space-2);
-}
-
-.fields__row {
-  display: grid;
-  grid-template-columns: minmax(var(--label-width), 30%) 1fr;
-  gap: var(--space-3);
-  padding-block: var(--space-1);
-}
-
-.fields__label {
   color: var(--muted);
 }
 
-.fields__value {
-  margin: 0;
-  font-variant-numeric: tabular-nums;
-  overflow-wrap: anywhere;
+.clause__fields {
+  margin: 0 0 var(--space-2);
+}
+
+.clause--added {
+  border-inline-start-color: var(--added-text);
+  background: var(--added-bg);
+}
+
+.clause--removed {
+  border-inline-start-color: var(--removed-text);
+  background: var(--removed-bg);
+}
+
+.clause--removed .clause__name {
+  color: var(--removed-text);
+  text-decoration: line-through;
 }
 </style>

@@ -31,7 +31,7 @@ The app is a reading tool for a document that people must trust. It is calm and 
 9. **Counts.** One polite live region announces a new change count as a full phrase.
 10. **Long values wrap.** Do not cut a value short. A reader must see the whole value.
 11. **Motion.** Respect `prefers-reduced-motion`. Animate only `transform` and `opacity`, for 200 milliseconds or less.
-12. **One scroll area.** The document scrolls with the page. Only the side panel has its own scroll.
+12. **One scroll area for the text.** The document scrolls with the page. Only the two lists of the side panel scroll by themselves.
 
 ## Tokens
 

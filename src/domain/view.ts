@@ -1,4 +1,4 @@
-import type { Change, Comparison, ViewItem } from './diff'
+import type { Change, Comparison, Edit, ViewItem } from './diff'
 import type { DocNode } from './types'
 
 /** True for an edit that changes only whitespace or the format of a number (D5). */
@@ -66,4 +66,14 @@ export function describeChange(
   if (!entry) return { name: change.nodeId, context: null }
   const parent = entry.parentId === null ? undefined : index.byId.get(entry.parentId)
   return { name: nameOf(entry.node), context: parent ? nameOf(parent.node) : null }
+}
+
+/** The edit of one part of a node, when its changes hold one. */
+export function editOf(changes: readonly Change[], part: Edit['part']): Edit | undefined {
+  for (const change of changes) {
+    if (change.kind !== 'edited') continue
+    const edit = change.edits.find((candidate) => candidate.part === part)
+    if (edit) return edit
+  }
+  return undefined
 }
