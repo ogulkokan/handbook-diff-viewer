@@ -51,7 +51,38 @@ The expected values are in "Expected changes" in `docs/SPEC.md`. Each test names
 ## Handoff
 
 - **Gate:**
-- **Review:**
-- **Measured:**
+
+  | Step | Result | Detail |
+  |---|---|---|
+  | Type check | PASS | |
+  | Lint | PASS | The rule against a Vue import in `src/domain/` is on |
+  | Format check | PASS | |
+  | Unit tests | PASS | 50 of 50 |
+  | Build | PASS | |
+  | Prose lint | PASS | 0 hard findings |
+
+- **Review:** approved. No Critical finding. Two Important findings, both fixed.
+  1. A real bug that the data files do not hold. A node that moved into a new section was lost.
+     It got no moved change and no edit, and the new section counted it in its size.
+     A removed section also counted children that moved out. A test names the bug, and the engine is fixed.
+  2. The v1 to v3 test checked "13 edits" and "1 reordered" with no node id. It now names the 13 ids.
+- **Measured:** each line is a unit test. The expected ids come from `docs/SPEC.md`.
+  - A1: v1 to v2 gives 3 added top nodes (12 nodes), 2 removed top nodes (5 nodes) and 5 edits.
+  - A2: v2 to v3 gives 1 added clause, 1 removed field and 8 edits.
+  - A3: `cl-hours-holidays` is one moved change, from `sec-hours` to `sec-leave`. Its child has no change.
+  - A4: the swap in `sec-comms` marks one node. The 39 other clauses of `sec-tools` are not marked.
+  - A5: `p-leave-sick-1` and `f-exp-equipment-limit` are formatting changes. `f-travel-hotel-limit` is not.
+  - A6: v1 to v3 gives the changes of both steps, with the 13 edited ids by name.
+  - A7: `diffWords` marks `six` as removed and `eight` as added in `p-travel-flights-1`.
+  - A8: `grep` finds no Vue import in `src/domain/`.
+  - Totals: 12 changes and 2 formatting changes for v1 to v2. 10 changes for v2 to v3.
+  - Order: each test-first step has its test commit before its code commit.
 - **Not measured:**
+  - Speed on a large document. `lcsPairs` uses a table of one list times the other.
 - **Left:**
+  - `diffDocuments(base, target).changes` is in document order. A removed node comes after the sibling before it.
+  - A node can have more than one change: moved, reordered and edited, in that order.
+  - An added or removed change has a `size`: the nodes that the other version does not hold.
+  - `diffSequence` works on any list with an equality function. Card 005 uses it on tokens.
+  - The formatting rule is literal: `rooms 101,102` against `rooms 101102` is a formatting change too.
+  - The view of card 004 needs the removed nodes in their place. The engine does not export that order yet.
