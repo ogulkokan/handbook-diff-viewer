@@ -82,22 +82,21 @@ export function editOf(changes: readonly Change[], part: Edit['part']): Edit | u
 export type Folded =
   { fold: false; item: ViewItem } | { fold: true; key: string; items: ViewNode[]; label: string }
 
+// A list holds sections and clauses. Fields and paragraphs are never folded on their own.
 function runLabel(items: readonly ViewNode[]): string {
   const count = (type: DocNode['type'], one: string, many: string) => {
     const n = items.filter((item) => item.node.type === type).length
     return n === 0 ? [] : [`${n} unchanged ${n === 1 ? one : many}`]
   }
-  return [
-    ...count('section', 'section', 'sections'),
-    ...count('clause', 'clause', 'clauses'),
-    ...count('field', 'field', 'fields'),
-    ...count('paragraph', 'paragraph', 'paragraphs'),
-  ].join(' and ')
+  return [...count('section', 'section', 'sections'), ...count('clause', 'clause', 'clauses')].join(
+    ' and ',
+  )
 }
 
 /**
  * Groups each run of neighbours that hold no change, themselves or below them, into one fold (D10).
- * A node with a change and a moved-away marker stay on their own, in their place.
+ * A node with a change, a node that is added or removed, and a moved-away marker stay on their
+ * own, in their place.
  * `counts` is the result of changeCounts for the same tree.
  */
 export function foldUnchanged(
@@ -106,7 +105,9 @@ export function foldUnchanged(
 ): Folded[] {
   const result: Folded[] = []
   for (const item of items) {
-    if (item.kind === 'moved-away' || counts.has(item.node.id)) {
+    // "Unchanged" means: in both versions, and no change at the node or below it.
+    // A node below an added or a removed node has no change of its own, but it is not unchanged.
+    if (item.kind === 'moved-away' || item.presence !== 'both' || counts.has(item.node.id)) {
       result.push({ fold: false, item })
       continue
     }
