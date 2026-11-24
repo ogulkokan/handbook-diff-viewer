@@ -31,7 +31,8 @@ Please keep `package-lock.json`. npm 10 cannot resolve this dependency tree from
 - A change is added, removed, edited, moved, reordered or replaced. Each mark has a glyph and a word next to its colour.
 - A clause that comes back under a new id shows as one change, "Replaced, likely renamed". The app says "likely" because it guesses.
 - An edited paragraph marks only the words that differ.
-- The side panel lists all changes, and "Previous change" and "Next change" step through them.
+- A column on the right lists all changes. Each entry says where the change is and what changed, such as "Value changed".
+- "Previous change" and "Next change" step through the changes, and the outline on the left follows the page.
 - "Changes only" folds each run of unchanged content. Find-in-page still reaches the folded text.
 - The address holds the two versions, the switches and the selected change. "Copy link" copies it.
 
@@ -183,7 +184,7 @@ Each card went through the same steps:
 5. A review by a read-only agent, [`.claude/agents/code-reviewer.md`](.claude/agents/code-reviewer.md). It reports only findings that it is sure of, each with the rule that is broken.
 6. A pull request with the acceptance table, the gate result and the review.
 
-The pull requests #1 to #9 have the record of each card.
+Each card has its own pull request, with its record.
 
 ### Guardrails
 
@@ -226,13 +227,22 @@ For the card with the unsafe markup, the reviewer acted as an attacker who contr
 | Layout, focus, scrolling, themes | A check in a real browser for each card, recorded in the card |
 | Find-in-page | By hand |
 
-There are 165 unit tests. A test guards an acceptance criterion, an invariant or a bug that really happened, and its expected value comes from the data or from `docs/SPEC.md`.
+There are 170 unit tests. A test guards an acceptance criterion, an invariant or a bug that really happened, and its expected value comes from the data or from `docs/SPEC.md`.
 
 ## Not done and what I would do next
 
 ### Planned, not built
 
 - A browser test. Card 008 adds one Playwright test for the main path. Today the browser checks are done by hand.
+
+### The size of the code
+
+The code is larger than this task needs. The comparison is about 1124 lines in `src/domain/`, and the page is about 1351 lines in 14 components and `App.vue`.
+It grew in the reviews. Each round added a case for an edge of the data or for a screen reader, and no round took code away.
+With more time I would do one pass only to make it smaller. Two places to start:
+
+- One recursive component for a node, in place of one component for each node type.
+- The rename of a clause as a hint on the removed and the added node, in place of a second pass that rewrites the tree.
 
 ### Known limits
 
@@ -244,7 +254,7 @@ There are 165 unit tests. A test guards an acceptance criterion, an invariant or
 
 - A screen reader. The `<del>`, `<ins>` and hidden words are checked in the DOM only.
 - Find-in-page in a second browser engine.
-- A window under 900 pixels with all controls. The brief asks for a laptop screen.
+- A window under 900 pixels. Between 900 and 1200 pixels the top bar has two rows and the two lists share the left panel.
 - A large document. See the next section.
 
 ### If the document grows
