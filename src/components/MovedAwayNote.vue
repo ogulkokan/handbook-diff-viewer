@@ -28,6 +28,10 @@ const { nameInTarget } = useNodeNames()
   font-size: var(--text-sm);
 }
 
+.note span {
+  margin-inline-end: var(--space-1);
+}
+
 .note a {
   color: inherit;
   font-weight: 600;

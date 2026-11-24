@@ -65,7 +65,8 @@ describe('App', () => {
     await base!.setValue('1')
 
     // docs/SPEC.md: v1 to v2 has 12 changes and 2 formatting changes.
-    expect(summary(wrapper)).toBe('12 changes 2 formatting changes are hidden.')
+    // Two of the 12, a removed and an added clause, are one replaced pair (D6): 11.
+    expect(summary(wrapper)).toBe('11 changes 2 formatting changes are hidden.')
     // The paragraph is in the page, and it shows no mark while formatting changes are hidden.
     expect(wrapper.find('#p-leave-sick-1').exists()).toBe(true)
     expect(wrapper.find('#p-leave-sick-1 del').exists()).toBe(false)
@@ -73,7 +74,7 @@ describe('App', () => {
 
     await button(wrapper, 'Show formatting changes').trigger('click')
 
-    expect(summary(wrapper)).toBe('14 changes 2 formatting changes are shown.')
+    expect(summary(wrapper)).toBe('13 changes 2 formatting changes are shown.')
     expect(button(wrapper, 'Show formatting changes').attributes('aria-pressed')).toBe('true')
     // data/: "1,000 EUR" in v1 and "1000 EUR" in v2.
     expect(wrapper.get('#f-exp-equipment-limit del').text()).toBe('Removed: 1,000 EUR')
@@ -96,16 +97,26 @@ describe('App', () => {
 
 describe('App: a removed node', () => {
   it('marks the text below a removed clause as removed for a screen reader', async () => {
-    const wrapper = await mountApp()
-    const [base, target] = wrapper.findAll<HTMLSelectElement>('header select')
-    await target!.setValue('2')
-    await base!.setValue('1')
+    const wrapper = await mountApp('/?base=1&target=2')
 
-    // v1 to v2 removes cl-sec-passwords with its paragraph. Only the clause has a badge.
-    expect(wrapper.get('#cl-sec-passwords h3 del').text()).toBe('Removed: Passwords')
-    expect(wrapper.get('#p-sec-passwords-1 del').text()).toContain('Removed: Use the company')
-    // The clause that replaced it is current text, with no <del>.
-    expect(wrapper.find('#cl-sec-credentials del').exists()).toBe(false)
+    // v1 to v2 removes cl-tool-trello with its two fields. Only the clause has a badge.
+    expect(wrapper.get('#cl-tool-trello h3 del').text()).toBe('Removed: Trello')
+    expect(wrapper.get('#f-tool-trello-vendor dd del').text()).toBe('Removed: Atlassian')
+    // The added clause is current text, with no <del>.
+    expect(wrapper.find('#cl-tool-cursor del').exists()).toBe(false)
+  })
+
+  it('shows a clause under a new id as one replaced clause, labelled as a guess', async () => {
+    const wrapper = await mountApp('/?base=1&target=2')
+    const clause = wrapper.get('#cl-sec-credentials')
+
+    // docs/SPEC.md row 6: cl-sec-passwords becomes cl-sec-credentials, and one word differs.
+    expect(wrapper.find('#cl-sec-passwords').exists()).toBe(false)
+    expect(clause.get('h3').text()).toContain('Replaced, likely renamed')
+    expect(clause.get('h3 del').text()).toBe('Removed: Passwords')
+    expect(clause.get('h3 ins').text()).toBe('Added: Credentials')
+    expect(clause.get('p del').text()).toBe('Removed: offered')
+    expect(clause.get('p ins').text()).toBe('Added: available')
   })
 })
 
@@ -343,6 +354,6 @@ describe('App: the place of the reader', () => {
     await target!.setValue('2')
     await base!.setValue('1')
 
-    expect(summary(wrapper)).toBe('12 changes 2 formatting changes are hidden.')
+    expect(summary(wrapper)).toBe('11 changes 2 formatting changes are hidden.')
   })
 })
