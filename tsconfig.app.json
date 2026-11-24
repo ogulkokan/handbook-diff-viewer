@@ -3,6 +3,9 @@
   "include": ["env.d.ts", "src/**/*", "src/**/*.vue"],
   "exclude": ["src/**/*.test.ts"],
   "compilerOptions": {
+    // Array.prototype.at and findLast are Baseline Widely available (D9).
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+
     // Extra safety for array and object lookups, but may have false positives.
     "noUncheckedIndexedAccess": true,
 
