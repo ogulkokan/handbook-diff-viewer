@@ -2,8 +2,9 @@
 import { computed } from 'vue'
 
 import type { ViewNode } from '@/domain/diff'
-import { plainText } from '@/domain/text'
+import { parseInline } from '@/domain/inline'
 import { editOf } from '@/domain/view'
+import InlineText from './InlineText.vue'
 import NodeBadges from './NodeBadges.vue'
 import PresenceText from './PresenceText.vue'
 import TextChange from './TextChange.vue'
@@ -15,13 +16,15 @@ const paragraph = computed(() => {
   return item.node
 })
 const edit = computed(() => editOf(item.changes, 'text'))
+// The text of the data becomes tokens before it reaches the template (D7).
+const tokens = computed(() => parseInline(paragraph.value.text))
 </script>
 
 <template>
   <p :id="paragraph.id" class="text" :class="`text--${item.presence}`" tabindex="-1">
     <PresenceText :presence="item.presence">
       <TextChange v-if="edit" :before="edit.before" :after="edit.after" :parts="edit.parts" />
-      <template v-else>{{ plainText(paragraph.text) }}</template>
+      <InlineText v-else :tokens="tokens" />
     </PresenceText>
     <NodeBadges :changes="item.changes" />
   </p>

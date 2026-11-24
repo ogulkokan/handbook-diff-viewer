@@ -7,12 +7,15 @@ Say what changed, not what was tried.
 
 ## Current focus
 
-- **Now:** A reader picks two versions and sees each change in the document, in a list and in the outline.
-- **Prev:** Card 004, show changes.
-- **Next:** Card 005, `docs/cards/005-safe-inline-markup.md`.
+- **Now:** Paragraph markup shows as bold and links. Nothing from the data reaches the page as HTML.
+- **Prev:** Card 005, safe inline markup.
+- **Next:** Card 006, `docs/cards/006-find-changes.md`.
 - **Last updated:** 2026-11-24
 
 ## Log
+
+- **Card 005** (2026-11-24): `parseInline` reads markup into tokens with an allowlist. An edited paragraph keeps its bold and links.
+  The `img` with a handler in version 3 never reaches the page. Built test first, 122 tests.
 
 - **Card 004** (2026-11-24): two version pickers, a mark on each change, a change list that jumps, counts in the outline.
   Formatting changes are hidden and counted. Light and dark colours pass a contrast test. 100 tests.

@@ -54,6 +54,9 @@ They have the same parent and the same type, and the text of their leaves is at 
 A walk over that document makes tokens with a text, a bold flag and a link address.
 Vue renders the tokens as text. Only bold and `http` or `https` links keep their format.
 **Rejected.** DOMPurify and one `v-html`. A word comparison on an HTML string cuts tags in two.
+**Rejected.** The Sanitizer API with `setHTML()`. The browser guide `sanitize-untrusted-html` gives it for HTML that goes into the page.
+It is not Baseline Widely available (D9), and its fallback in the guide is DOMPurify.
+This app puts no HTML into the page, so it needs no sanitizer.
 **Consequence.** ESLint treats `v-html` as an error. Markup beyond bold and links shows as plain text.
 
 ## D8 — The only runtime dependency is Vue
