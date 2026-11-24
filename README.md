@@ -22,19 +22,19 @@ npm run gate   # type check, lint, format check, unit tests, build, prose lint
 npm test       # unit tests only
 ```
 
-Keep `package-lock.json`. npm 10 cannot resolve this dependency tree from `package.json` alone, and it stops with an internal error. With the lock file, it installs.
+Please keep `package-lock.json`. npm 10 cannot resolve this dependency tree from `package.json` alone and stops with an internal error. With the lock file it installs.
 
 ## What it does
 
-- **Pick two versions.** The app opens on the previous version against the latest. The base version is always the older one.
-- **Read one document.** The app shows the target version in reading order and marks each change in place.
-- **See each kind of change.** Added, removed, edited, moved and reordered. Each mark has a glyph and a word, not only a colour.
-- **See the words that changed.** An edited paragraph marks only the words that differ.
-- **Reach a change fast.** The side panel lists all changes. "Previous change" and "Next change" step through them.
-- **Hide the rest.** "Changes only" folds each run of unchanged content. Find-in-page still reaches the folded text.
-- **Share a place.** The address holds the two versions, the switches and the selected change. "Copy link" copies it.
+- You pick two versions. The app opens on the previous version against the latest, and the base version is always the older one.
+- You read one document: the target version in reading order, with each change marked where it is.
+- A change is added, removed, edited, moved or reordered. Each mark has a glyph and a word next to its colour.
+- An edited paragraph marks only the words that differ.
+- The side panel lists all changes, and "Previous change" and "Next change" step through them.
+- "Changes only" folds each run of unchanged content. Find-in-page still reaches the folded text.
+- The address holds the two versions, the switches and the selected change. "Copy link" copies it.
 
-It has a light and a dark theme, and it follows the setting of the system.
+The app has a light and a dark theme and follows the setting of the system.
 
 ## The reader
 
@@ -43,11 +43,11 @@ The brief leaves the reader open. I chose this one:
 > A team member who read an older version some months ago and asks:
 > "What changed since then, and does it change what I do?"
 
-This reader does not edit. After the review, the reader shares a link to one change or closes the app.
+This reader does not edit the document. After the review, the reader shares a link to one change or closes the app.
 
 ## Questions and assumptions
 
-The brief allows questions or written assumptions. I took the second path. These are the questions I would ask, each with the assumption that the app takes.
+The brief allows questions or written assumptions, and I took the second path. These are the questions I would ask, each with the assumption that the app takes.
 
 | # | Question | Assumption |
 |---|---|---|
@@ -62,7 +62,7 @@ The brief allows questions or written assumptions. I took the second path. These
 
 ## What the data holds
 
-I compared the three files before I wrote any code. Each row tests one point that the brief leaves open.
+The first step, before any code, was to compare the three files. Each row below tests one point that the brief leaves open.
 
 | Node | What happens | Tests |
 |---|---|---|
@@ -81,11 +81,11 @@ I compared the three files before I wrote any code. Each row tests one point tha
 | `sec-tools` | 40 clauses, and 5 status edits over two versions | Scale |
 | `sec-remote`, v2 | A new section with 3 clauses | Added subtree |
 
-The expected changes for each comparison are in [`docs/SPEC.md`](docs/SPEC.md), by node id. The tests take their values from that list, not from the code.
+[`docs/SPEC.md`](docs/SPEC.md) lists the expected changes for each comparison by node id. The tests take their expected values from that list.
 
 ## Decisions
 
-Each decision has its context and what was rejected in [`docs/DECISIONS.md`](docs/DECISIONS.md).
+[`docs/DECISIONS.md`](docs/DECISIONS.md) has the context of each decision and what was rejected.
 
 | | Decision | Reason |
 |---|---|---|
@@ -111,7 +111,7 @@ Each decision has its context and what was rejected in [`docs/DECISIONS.md`](doc
 |---|---|
 | `vue` | The framework that the brief asks for. It is the only runtime dependency (D8) |
 
-No store, no router, no UI kit, no CSS framework and no comparison library. One function for the longest common subsequence, 31 lines of code, serves the word comparison and the reorder rule. I checked `@vueuse/core` need by need. The result is in [`docs/conventions/vue.md`](docs/conventions/vue.md).
+The app has no store, no router, no UI kit, no CSS framework and no comparison library. One function for the longest common subsequence, 31 lines of code, does the word comparison and the reorder rule. I considered `@vueuse/core`, and the check for each need is in [`docs/conventions/vue.md`](docs/conventions/vue.md).
 
 ### Development
 
@@ -134,9 +134,9 @@ No store, no router, no UI kit, no CSS framework and no comparison library. One 
 | `@vue/eslint-config-typescript` | The TypeScript rules for `.vue` and `.ts` files |
 | `eslint-config-prettier` | Turns off lint rules that fight the formatter |
 | `jiti` | Lets ESLint load its config, which is TypeScript |
-| `prettier` | One format, no debate |
+| `prettier` | Formats the code in one style |
 
-`create-vue` made the project. I removed five packages of its template that this project does not need:
+`create-vue` made the project. Its template has five packages that this project does not need, so they are not here:
 
 - oxlint and its ESLint plugin
 - the Vue devtools plugin
@@ -145,20 +145,20 @@ No store, no router, no UI kit, no CSS framework and no comparison library. One 
 
 ## How I worked with an agent
 
-I used Claude Code for the plan, the code and the reviews. This is the method.
+I used Claude Code for the plan, the code and the reviews.
 
 ### Before any code
 
-The first commits on `main` hold no app code. They hold what the agent works from:
+The first commits on `main` have no app code. They hold what the agent works from:
 
 - [`docs/SPEC.md`](docs/SPEC.md): the reader, the change kinds, the data findings and the expected changes by node id.
-- [`docs/DECISIONS.md`](docs/DECISIONS.md): the decisions above. The agent proposes options. A product decision is mine.
+- [`docs/DECISIONS.md`](docs/DECISIONS.md): the decisions above. The agent proposes options, and a product decision is mine.
 - [`docs/cards/`](docs/cards/): the build, cut into cards. Each card has a scope, a list of what is out of scope, and acceptance criteria that each name a test or a check.
 - [`CLAUDE.md`](CLAUDE.md): the rules for each change, each with its reason.
 
 ### Rules from outside sources
 
-Five public skill sets hold rules that fit this app. I did not install them (D12). Each one became a short convention file and a thin skill that points to it:
+Five public skill sets have rules that fit this app. I did not install them (D12). Each one became a short convention file and a thin skill that points to it:
 
 | Area | File |
 |---|---|
@@ -168,7 +168,7 @@ Five public skill sets hold rules that fit this app. I did not install them (D12
 | Vue | [`docs/conventions/vue.md`](docs/conventions/vue.md) |
 | Tests | [`docs/conventions/testing.md`](docs/conventions/testing.md) |
 
-[`.claude/skills/README.md`](.claude/skills/README.md) links each source at the commit that was read. It says what was kept and what was dropped.
+[`.claude/skills/README.md`](.claude/skills/README.md) links each source at the commit that was read, and says what was kept and what was dropped.
 
 ### One card, one branch, one pull request
 
@@ -178,24 +178,24 @@ Each card went through the same steps:
 2. For the engine and the markup parser: a failing test first, in its own commit, then the code.
 3. `npm run gate`. CI runs the same script.
 4. A check in a real browser for each UI card: light theme, dark theme, and the numbers from `docs/SPEC.md`.
-5. A review by a read-only agent, [`.claude/agents/code-reviewer.md`](.claude/agents/code-reviewer.md). It reports only what it is sure of, with the rule that is broken.
+5. A review by a read-only agent, [`.claude/agents/code-reviewer.md`](.claude/agents/code-reviewer.md). It reports only findings that it is sure of, each with the rule that is broken.
 6. A pull request with the acceptance table, the gate result and the review.
 
-The pull requests #1 to #6 hold the record of each card.
+The pull requests #1 to #6 have the record of each card.
 
 ### Guardrails
 
-A rule in a document is easy to break. These rules fail the gate:
+A rule that is only written down can be forgotten. The gate checks these five rules, so a change that breaks one of them does not pass.
 
-- `vue/no-v-html` is a lint error (D7).
-- `src/domain/` cannot import Vue (D8). The engine stays plain TypeScript.
-- A hook lints each file right after the agent edits it.
-- A test reads the colour tokens and checks the contrast of each pair, in both themes.
-- A linter for plain English runs on the Markdown files, the cards and the skills.
+- **No raw HTML from the data.** In Vue, `v-html` puts a string into the page as HTML, and the `img` with a handler in version 3 would then run. The lint rule `vue/no-v-html` is an error (D7).
+- **The engine has no framework.** A file in `src/domain/` that imports Vue fails the lint step (D8). The engine stays plain TypeScript, so a test can run it with no page.
+- **Lint at once.** A hook lints each file right after the agent saves it. The agent sees the finding in the same turn and fixes it there.
+- **Contrast.** A test reads the colour file and computes the contrast of each text and background pair, in the light and the dark theme. A colour that is too weak fails the test.
+- **Plain English.** A linter reads the Markdown files, the cards and the skills. A sentence of more than 25 words, a semicolon or a sales word fails the gate.
 
-### What went wrong, and what caught it
+### What went wrong and what caught it
 
-The agent made mistakes. The method is there to catch them.
+The agent made mistakes during the build. This table lists them, each with what caught it.
 
 | What went wrong | What caught it |
 |---|---|
@@ -203,10 +203,10 @@ The agent made mistakes. The method is there to catch them.
 | A clause that moved into a new section was lost: no change, no edit | The reviewer, with a small test document |
 | The contrast test checked nothing: the test runner gave an empty string for the CSS file | A check in the same test that the file was read |
 | The summary read "12 changes2 formatting changes" | A mount test |
-| A test expected a label that I had guessed. The data says something else | The test |
+| A test expected a label that the agent had guessed. The data says something else | The test |
 | A component computed the word comparison, against the project's own rule | The reviewer |
 | A screen reader would read removed text as current text | The reviewer |
-| "Changes only" folded the clauses of a new section as "3 unchanged clauses" | The reviewer. I had checked only one of the three comparisons |
+| "Changes only" folded the clauses of a new section as "3 unchanged clauses" | The reviewer. The browser check had covered only one of the three comparisons |
 | Two tests built their expected values from the output of the code | The reviewer |
 | Hidden text for screen readers made the page 318 pixels taller | The browser check |
 
@@ -224,27 +224,42 @@ For the card with the unsafe markup, the reviewer acted as an attacker who contr
 | Layout, focus, scrolling, themes | A check in a real browser for each card, recorded in the card |
 | Find-in-page | By hand |
 
-There are 152 unit tests. A test guards an acceptance criterion, an invariant or a bug that really happened. Each expected value comes from the data or from `docs/SPEC.md`.
+There are 152 unit tests. A test guards an acceptance criterion, an invariant or a bug that really happened, and its expected value comes from the data or from `docs/SPEC.md`.
 
 ## Not done and what I would do next
 
-**Decided, not built**
+### Decided, not built
 
-- **Rename under a new id (D6).** `cl-sec-passwords` and `cl-sec-credentials` show as one removed and one added clause, next to each other. Card 007 pairs them as "Replaced, likely renamed".
-- **A browser test.** Card 008 adds one Playwright test for the main path. Today the browser checks are done by hand.
+- Rename under a new id (D6). `cl-sec-passwords` and `cl-sec-credentials` show as one removed and one added clause, next to each other. Card 007 pairs them as "Replaced, likely renamed".
+- A browser test. Card 008 adds one Playwright test for the main path. Today the browser checks are done by hand.
 
-**Not measured**
+### Not measured
 
 - A screen reader. The `<del>`, `<ins>` and hidden words are checked in the DOM only.
 - Find-in-page in a second browser engine.
 - A window under 900 pixels with all controls. The brief asks for a laptop screen.
-- Speed on a large document. The comparison of two lists uses a table of one list times the other.
+- A large document. See the next section.
 
-**Next, in this order**
+### If the document grows
+
+The mock data has 3 versions and about 190 nodes. The handbook itself says that it is reviewed every 6 months.
+If that holds, three years give six versions or more, and a real handbook is much larger.
+I did not test this size. These are the places where the app would break first, and what I would do.
+
+| Today | With many large versions | What I would do |
+|---|---|---|
+| The app loads all versions at the start | The start gets slow | Load only the two versions in the comparison |
+| Two lists to pick the versions | "Which one did I read?" gets hard to answer | Remember the last version that the reader saw, and compare from there |
+| A comparison of two versions | No answer to "when did this clause change?" | A history of one node over all versions |
+| The whole document is in the page | Scrolling gets heavy with thousands of nodes | Render a section only when it comes near the screen |
+| The browser computes the comparison at each visit | A delay on a large document | Compute it once when a version is published, and store the result |
+| The word comparison uses a table of one text times the other | Slow for a very long paragraph | A limit on the length, or a faster algorithm |
+| One flat list of changes | 300 changes are not readable as one list | Group by section and by kind, with a filter |
+
+### Next, in this order
 
 1. A confirmation step: the reader marks a change as read, and the next visit shows only what is new.
-2. Usage data: which changes readers open and which they skip. It tells if the order and the noise rule are right.
-3. A history of one node over all versions, for the question "when did this change?".
-4. Dates in one format for display, with the original value kept.
-5. A layout for a phone.
-6. A way back to the top bar from a change, for keyboard readers. Today that takes Shift and Tab.
+2. Usage data: which changes readers open and which they skip. It shows if the order and the noise rule are right.
+3. Dates in one format for display, with the original value kept.
+4. A layout for a phone.
+5. A way back to the top bar from a change, for keyboard readers. Today that takes Shift and Tab.
