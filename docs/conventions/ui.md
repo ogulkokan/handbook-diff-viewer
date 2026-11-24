@@ -15,8 +15,10 @@ The app is a reading tool for a document that people must trust. It is calm and 
 - Fonts: the system font stack. No web font is loaded.
 - Numbers in a count or a column use `font-variant-numeric: tabular-nums`.
 - Spacing steps are 4, 8, 12, 16, 24 and 32 pixels.
-- The reading column is about 75 characters wide. The side panel is 260 pixels wide.
-- The top bar is one row, 48 pixels high.
+- The reading column is about 75 characters wide. The outline is 260 pixels wide, and the change list is 320 pixels wide.
+- From 1000 pixels the page has three columns: the outline, the text and the change list. The side columns get narrower on a small window. Below 1000 pixels the page is one column.
+- The markup has the order of the page, so the Tab key follows what the reader sees.
+- The top bar is one row, 48 pixels high. Below 1200 pixels it has two rows.
 
 ## Rules in order of weight
 
@@ -31,7 +33,7 @@ The app is a reading tool for a document that people must trust. It is calm and 
 9. **Counts.** One polite live region announces a new change count as a full phrase.
 10. **Long values wrap.** Do not cut a value short. A reader must see the whole value.
 11. **Motion.** Respect `prefers-reduced-motion`. Animate only `transform` and `opacity`, for 200 milliseconds or less.
-12. **One scroll area.** The document scrolls with the page. Only the side panel has its own scroll.
+12. **One scroll area for the text.** The document scrolls with the page. Only the outline and the change list scroll by themselves.
 
 ## Tokens
 

@@ -16,7 +16,7 @@ The reader does not edit the document. After the review, the reader shares a lin
 ## Solution
 
 The app shows one document: the target version, in its reading order. It marks each change in place.
-A side panel lists all changes and the outline. A top bar holds the two version pickers and the controls.
+The outline is in a column on the left, and a column on the right lists all changes. A top bar holds the two version pickers and the controls.
 
 ## User stories
 
@@ -40,7 +40,7 @@ A node can have more than one change. For example, a clause can be moved and edi
 | edited | Same id, and a title, label, value, text or status differs | Earlier and current text. A paragraph shows the words that changed |
 | moved | Same id, different parent | The node at its new place, with "Moved from" and the earlier section |
 | reordered | Same parent, different place among the siblings that both versions share | The badge "Reordered" on the fewest nodes that explain the order |
-| replaced | A removed node and an added node that are at least 80% alike | One change: "Replaced, likely renamed" |
+| replaced | A removed and an added clause or section, at least 80% alike, each with 10 words or more | One change: "Replaced, likely renamed" |
 
 An added or removed node with children is one change, at the top node. The app does not count each child.
 
@@ -73,6 +73,7 @@ Each row tests one point that the brief leaves open. The rows were found by a co
 | 13 | `sec-tools` | 40 clauses, and 5 status edits over two versions | Scale |
 | 14 | `sec-remote`, v2 | A new section with 3 clauses | Added subtree |
 | 15 | v1 to v3 | All rows above at once | Any two versions |
+| 16 | `sec-travel`, each version | A section inside the section `sec-expenses` | Nesting |
 
 ## Expected changes
 

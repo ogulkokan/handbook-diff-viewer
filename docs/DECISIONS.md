@@ -44,7 +44,9 @@ Code names a decision short, as `(D7)`. A decision changes only when the owner s
 **Context.** `cl-sec-passwords` becomes `cl-sec-credentials`: a new id, the same place, and one word of text differs.
 **Decision.** A removed node and an added node pair as "replaced" under three conditions.
 They have the same parent and the same type, and the text of their leaves is at least 80% alike.
+Each side must hold 10 words of content or more.
 **Rejected.** A match on labels. Trello and Cursor have the same labels and are different tools.
+**Rejected.** A pair of two short clauses. Jira and Confluence hold the same two values and are different tools.
 **Consequence.** The UI says "Replaced, likely renamed". The schema says a new id is a new node, so the app does not claim more.
 
 ## D7 — Inline markup becomes tokens, never HTML
@@ -54,6 +56,9 @@ They have the same parent and the same type, and the text of their leaves is at 
 A walk over that document makes tokens with a text, a bold flag and a link address.
 Vue renders the tokens as text. Only bold and `http` or `https` links keep their format.
 **Rejected.** DOMPurify and one `v-html`. A word comparison on an HTML string cuts tags in two.
+**Rejected.** The Sanitizer API with `setHTML()`. The browser guide `sanitize-untrusted-html` gives it for HTML that goes into the page.
+It is not Baseline Widely available (D9), and its fallback in the guide is DOMPurify.
+This app puts no HTML into the page, so it needs no sanitizer.
 **Consequence.** ESLint treats `v-html` as an error. Markup beyond bold and links shows as plain text.
 
 ## D8 — The only runtime dependency is Vue
@@ -61,7 +66,7 @@ Vue renders the tokens as text. Only bold and `http` or `https` links keep their
 **Context.** The brief asks for a reason for each dependency. The state is two versions and one selected change.
 **Decision.** No store, no router, no UI kit, no CSS framework and no comparison library.
 One function for the longest common subsequence serves the word comparison and the reorder rule.
-**Rejected.** The `diff` package. It is a fair choice, but the function is about 25 lines and has tests.
+**Rejected.** The `diff` package. It is a fair choice, but the function is 31 lines of code and has tests.
 **Rejected.** `@vueuse/core`. Each need was checked against its function, and the table is in `docs/conventions/vue.md`.
 Two functions hide a result that this app must show, and the one that fits saves about 8 lines.
 **Consequence.** If the word comparison reads badly in the browser, `diff` replaces the function in one commit.

@@ -1,0 +1,10 @@
+# The task as delivered. Never reformat it.
+data/
+docs/BRIEF.md
+
+# Prose has its own check: npm run lint:prose.
+*.md
+
+dist/
+coverage/
+package-lock.json
