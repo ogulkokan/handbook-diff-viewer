@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { diffDocuments, type Change, type ViewItem, type ViewNode } from './diff'
 import { v1, v2, v3 } from './fixtures'
 import { pairReplaced } from './pairReplaced'
+import { parseDocument } from './parseDocument'
 import { isFormattingChange } from './view'
 
 // Expected values: docs/SPEC.md rows 6 and 7, and "Expected changes".
@@ -80,5 +81,62 @@ describe('pairReplaced (D6)', () => {
 
     expect(of(changes, 'cl-sec-credentials')).toEqual(['replaced'])
     expect(changes.filter((change) => !isFormattingChange(change))).toHaveLength(20)
+  })
+})
+
+// Small documents for cases that the three data files do not hold.
+function documentOf(children: unknown[]) {
+  return parseDocument({ id: 'doc', version: 1, title: 'T', updatedAt: '2026-01-01', children })
+}
+const section = (id: string, children: unknown[]) => ({ id, type: 'section', title: id, children })
+const clause = (id: string, children: unknown[]) => ({ id, type: 'clause', title: id, children })
+const field = (id: string, value: string) => ({ id, type: 'field', label: id, value })
+const paragraph = (id: string, text: string) => ({ id, type: 'paragraph', text })
+
+describe('pairReplaced: limits', () => {
+  it('does not pair a lone field with another field of the same clause', () => {
+    // Card 007, out of scope: a pair of leaves with no parent pair.
+    const base = documentOf([section('s', [clause('c', [field('f-status', 'Approved')])])])
+    const target = documentOf([section('s', [clause('c', [field('f-tier', 'Approved')])])])
+
+    const changes = pairReplaced(diffDocuments(base, target)).changes
+
+    expect(of(changes, 'f-status')).toEqual(['removed'])
+    expect(of(changes, 'f-tier')).toEqual(['added'])
+  })
+
+  it('matches the nodes inside a pair by type, and shows what differs as part of the pair', () => {
+    const text = 'Use the password manager for each work account that you have.'
+    const base = documentOf([
+      section('s', [clause('c-old', [paragraph('p-old', text), field('f-gone', 'x')])]),
+    ])
+    const target = documentOf([
+      section('s', [clause('c-new', [paragraph('p-new', text), field('f-extra', 'y')])]),
+    ])
+
+    const paired = pairReplaced(diffDocuments(base, target))
+
+    expect(of(paired.changes, 'c-new')).toEqual(['replaced'])
+    // The two fields match by type. Their difference shows inside the pair, as part of it.
+    expect(of(paired.changes, 'f-extra')).toEqual([])
+    expect(find(paired.tree, 'f-extra')).toMatchObject({
+      presence: 'both',
+      changes: [{ kind: 'edited', partOf: 'c-new' }],
+    })
+    expect(find(paired.tree, 'p-new')).toMatchObject({ presence: 'both', changes: [] })
+  })
+
+  it('marks a node inside a pair with no node to match as added or removed', () => {
+    const text = 'Use the password manager for each work account that you have.'
+    const base = documentOf([section('s', [clause('c-old', [paragraph('p-old', text)])])])
+    const target = documentOf([
+      section('s', [clause('c-new', [paragraph('p-new', text), field('f-extra', 'y')])]),
+    ])
+
+    const paired = pairReplaced(diffDocuments(base, target))
+
+    expect(of(paired.changes, 'c-new')).toEqual(['replaced'])
+    expect(of(paired.changes, 'f-extra')).toEqual(['added'])
+    expect(find(paired.tree, 'f-extra')).toMatchObject({ presence: 'added' })
   })
 })
