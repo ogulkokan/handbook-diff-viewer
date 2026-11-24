@@ -15,6 +15,12 @@ import { changesIn } from './view'
 /** Two nodes pair when this share of the words of their leaves is the same, in the same order. */
 const ALIKE = 0.8
 
+/**
+ * Below this number of words on a side, the measure says nothing. Two tools that both hold
+ * "Atlassian" and "Approved" are 100% alike and are still two tools.
+ */
+const MIN_WORDS = 10
+
 const NOT_SPACE = /\S/
 
 // The words that a reader reads in a node: field values and paragraph text.
@@ -30,11 +36,11 @@ function contentWords(node: DocNode): string[] {
   return node.children.flatMap(contentWords)
 }
 
-/** From 0 to 1: how much of the content of two nodes is the same. 0 when a node has no content. */
+/** From 0 to 1: how much of the content of two nodes is the same. 0 when a node has too little content. */
 export function likeness(a: DocNode, b: DocNode): number {
   const wordsA = contentWords(a)
   const wordsB = contentWords(b)
-  if (wordsA.length === 0 || wordsB.length === 0) return 0
+  if (wordsA.length < MIN_WORDS || wordsB.length < MIN_WORDS) return 0
   return (2 * lcsPairs(wordsA, wordsB).length) / (wordsA.length + wordsB.length)
 }
 
