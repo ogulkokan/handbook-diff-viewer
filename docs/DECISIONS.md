@@ -64,7 +64,7 @@ This app puts no HTML into the page, so it needs no sanitizer.
 **Context.** The brief asks for a reason for each dependency. The state is two versions and one selected change.
 **Decision.** No store, no router, no UI kit, no CSS framework and no comparison library.
 One function for the longest common subsequence serves the word comparison and the reorder rule.
-**Rejected.** The `diff` package. It is a fair choice, but the function is about 25 lines and has tests.
+**Rejected.** The `diff` package. It is a fair choice, but the function is 31 lines of code and has tests.
 **Rejected.** `@vueuse/core`. Each need was checked against its function, and the table is in `docs/conventions/vue.md`.
 Two functions hide a result that this app must show, and the one that fits saves about 8 lines.
 **Consequence.** If the word comparison reads badly in the browser, `diff` replaces the function in one commit.

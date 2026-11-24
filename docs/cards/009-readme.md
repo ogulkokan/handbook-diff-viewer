@@ -54,7 +54,28 @@ Also: the final state of `PROGRESS.md`, and a check that each card's Handoff is 
 ## Handoff
 
 - **Gate:**
+
+  | Step | Result | Detail |
+  |---|---|---|
+  | Type check | PASS | |
+  | Lint | PASS | |
+  | Format check | PASS | |
+  | Unit tests | PASS | 152 of 152 |
+  | Build | PASS | |
+  | Prose lint | PASS | It failed once on a sentence of 27 words in the README. The sentence is a list now |
+
 - **Review:** not needed for this card.
 - **Measured:**
+  - A2: a script compared `package.json` with the README. Each of the 19 packages has a line.
+  - A3: each number in the README comes from a command.
+    152 tests: `npm test`. 31 lines: `lcs.ts` with no comment and no empty line. 13 decisions: the headings of `docs/DECISIONS.md`.
+    318 pixels and "about 60 inputs": the record of cards 006 and 005.
+  - A4: `git grep -i` for the company name finds nothing.
+  - A5: the prose lint passes on the README.
+  - A6: the section "Not done" names cards 007 and 008, and each criterion that was not measured.
 - **Not measured:**
+  - A1: a fresh clone. It is a step of the release, after the last card is merged.
 - **Left:**
+  - The README has no section for time. The brief does not ask for one.
+  - The screenshot is `docs/screenshot.jpg`: version 1 against version 3, light theme, "Changes only".
+  - If card 007 is built, three places change: the test count, "Decided, not built", and the pull request range.
