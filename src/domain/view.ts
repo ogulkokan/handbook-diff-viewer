@@ -60,19 +60,66 @@ export function nameOf(node: DocNode): string {
   }
 }
 
+export interface ChangeDescription {
+  /** The name of the changed node. */
+  name: string
+  /** The names of the nodes above it, from the top of the document down. */
+  path: string[]
+  /** What the badge of the kind does not say: the part that changed, or where a node came from. */
+  detail: string
+}
+
+function capitalized(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1)
+}
+
+// "Value changed", "Title and status changed", "Label, value and text changed".
+function partsChanged(parts: readonly string[]): string {
+  const list =
+    parts.length <= 1 ? (parts[0] ?? '') : `${parts.slice(0, -1).join(', ')} and ${parts.at(-1)}`
+  return list === '' ? '' : `${capitalized(list)} changed`
+}
+
+function detailOf(comparison: Comparison, change: Change): string {
+  switch (change.kind) {
+    case 'edited': {
+      const what = partsChanged(change.edits.map((edit) => edit.part))
+      // The badge says "Formatting change". The detail must not read like a real edit.
+      return change.formatting ? `${what} in format only` : what
+    }
+    case 'moved': {
+      const from =
+        change.fromParentId === null
+          ? undefined
+          : comparison.baseIndex.byId.get(change.fromParentId)
+      return `Moved from ${from ? nameOf(from.node) : 'the top of the document'}`
+    }
+    case 'replaced': {
+      const earlier = comparison.baseIndex.byId.get(change.fromNodeId)
+      return earlier ? `Was ${nameOf(earlier.node)}` : ''
+    }
+    default:
+      return ''
+  }
+}
+
 /**
- * The name of a changed node and the name of the node that holds it, for the change list.
+ * The words for one entry of the change list: the name of the node, the path to it, and a detail.
  * A removed node is looked up in the base version, each other node in the target version.
  */
-export function describeChange(
-  comparison: Comparison,
-  change: Change,
-): { name: string; context: string | null } {
+export function describeChange(comparison: Comparison, change: Change): ChangeDescription {
   const index = change.kind === 'removed' ? comparison.baseIndex : comparison.targetIndex
   const entry = index.byId.get(change.nodeId)
-  if (!entry) return { name: change.nodeId, context: null }
-  const parent = entry.parentId === null ? undefined : index.byId.get(entry.parentId)
-  return { name: nameOf(entry.node), context: parent ? nameOf(parent.node) : null }
+  if (!entry) return { name: change.nodeId, path: [], detail: '' }
+
+  const path: string[] = []
+  for (let id = entry.parentId; id !== null;) {
+    const parent = index.byId.get(id)
+    if (!parent) break
+    path.unshift(nameOf(parent.node))
+    id = parent.parentId
+  }
+  return { name: nameOf(entry.node), path, detail: detailOf(comparison, change) }
 }
 
 /** The edit of one part of a node, when its changes hold one. */

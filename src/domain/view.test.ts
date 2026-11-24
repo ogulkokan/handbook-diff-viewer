@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { diffDocuments, type ViewItem, type ViewNode } from './diff'
 import { v1, v2, v3 } from './fixtures'
+import { pairReplaced } from './pairReplaced'
 import {
   changeCounts,
   changesIn,
@@ -111,22 +112,56 @@ describe('withoutFormattingChanges', () => {
 })
 
 describe('describeChange', () => {
-  it('names a field by its label and the clause that holds it', () => {
-    // data/v2.json: the field has the label "Days per year" in the clause "Annual leave".
-    const comparison = diffDocuments(v1, v2)
-    const change = comparison.changes.find((c) => c.nodeId === 'f-leave-annual-days')!
+  const v1v2 = diffDocuments(v1, v2)
+  const describe_ = (id: string) =>
+    describeChange(
+      v1v2,
+      v1v2.changes.find((change) => change.nodeId === id)!,
+    )
 
-    expect(describeChange(comparison, change)).toEqual({
+  it('names a field by its label, with the path to it and the part that changed', () => {
+    // data/v2.json: the field "Days per year" is in the clause "Annual leave" of the section "Leave".
+    expect(describe_('f-leave-annual-days')).toEqual({
       name: 'Days per year',
-      context: 'Annual leave',
+      path: ['Leave', 'Annual leave'],
+      detail: 'Value changed',
     })
   })
 
-  it('names a removed node from the base version', () => {
-    const comparison = diffDocuments(v1, v2)
-    const change = comparison.changes.find((c) => c.nodeId === 'cl-sec-passwords')!
+  it('says "Label changed" when the label differs and the value does not', () => {
+    expect(describe_('f-hours-overtime-max').detail).toBe('Label changed')
+  })
 
-    expect(describeChange(comparison, change)).toEqual({ name: 'Passwords', context: 'Security' })
+  it('says "Text changed" for a paragraph, and "Title changed" for a section', () => {
+    const v2v3 = diffDocuments(v2, v3)
+    const of = (id: string) =>
+      describeChange(
+        v2v3,
+        v2v3.changes.find((change) => change.nodeId === id)!,
+      )
+
+    expect(of('p-travel-flights-1')).toEqual({
+      name: 'Paragraph',
+      path: ['Expenses', 'Travel', 'Flights'],
+      detail: 'Text changed',
+    })
+    expect(of('sec-hours')).toEqual({ name: 'Working Time', path: [], detail: 'Title changed' })
+  })
+
+  it('names a removed node from the base version, with no detail', () => {
+    expect(describe_('cl-sec-passwords')).toEqual({
+      name: 'Passwords',
+      path: ['Security'],
+      detail: '',
+    })
+  })
+
+  it('says where a moved node came from', () => {
+    expect(describe_('cl-hours-holidays')).toEqual({
+      name: 'Public holidays',
+      path: ['Leave'],
+      detail: 'Moved from Working Hours',
+    })
   })
 })
 
@@ -228,5 +263,21 @@ describe('foldUnchanged: nodes below an added or a removed node', () => {
 
     expect(folded.map((item) => item.node.id)).not.toContain('cl-tool-trello')
     expect(folded.map((item) => item.node.id)).not.toContain('cl-tool-cursor')
+  })
+})
+
+describe('describeChange: wording', () => {
+  it('says that a formatting change is in format only', () => {
+    const v1v2 = diffDocuments(v1, v2)
+    const change = v1v2.changes.find((c) => c.nodeId === 'f-exp-equipment-limit')!
+
+    expect(describeChange(v1v2, change).detail).toBe('Value changed in format only')
+  })
+
+  it('says the earlier name of a replaced clause', () => {
+    const paired = pairReplaced(diffDocuments(v1, v2))
+    const change = paired.changes.find((c) => c.nodeId === 'cl-sec-credentials')!
+
+    expect(describeChange(paired, change).detail).toBe('Was Passwords')
   })
 })
