@@ -1,0 +1,46 @@
+/* Every colour and size of the app. A component uses a token, never a raw value. */
+
+:root {
+  color-scheme: light dark;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  --text-sm: 0.8125rem;
+  --text-base: 0.9375rem;
+  --text-md: 1rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.5rem;
+
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  --measure: 75ch;
+  --bar-height: 48px;
+  --panel-width: 260px;
+  --radius: 4px;
+
+  --bg: #ffffff;
+  --surface: #f8fafc;
+  --text: #0f172a;
+  --muted: #475569;
+  --border: #e2e8f0;
+  --border-control: #64748b;
+  --accent: #1d4ed8;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0b1120;
+    --surface: #111827;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --border: #1f2937;
+    --border-control: #94a3b8;
+    --accent: #93c5fd;
+  }
+}
