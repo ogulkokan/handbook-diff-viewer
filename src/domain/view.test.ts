@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { diffDocuments, type ViewItem, type ViewNode } from './diff'
 import { v1, v2, v3 } from './fixtures'
+import { pairReplaced } from './pairReplaced'
 import {
   changeCounts,
   changesIn,
@@ -262,5 +263,21 @@ describe('foldUnchanged: nodes below an added or a removed node', () => {
 
     expect(folded.map((item) => item.node.id)).not.toContain('cl-tool-trello')
     expect(folded.map((item) => item.node.id)).not.toContain('cl-tool-cursor')
+  })
+})
+
+describe('describeChange: wording', () => {
+  it('says that a formatting change is in format only', () => {
+    const v1v2 = diffDocuments(v1, v2)
+    const change = v1v2.changes.find((c) => c.nodeId === 'f-exp-equipment-limit')!
+
+    expect(describeChange(v1v2, change).detail).toBe('Value changed in format only')
+  })
+
+  it('says the earlier name of a replaced clause', () => {
+    const paired = pairReplaced(diffDocuments(v1, v2))
+    const change = paired.changes.find((c) => c.nodeId === 'cl-sec-credentials')!
+
+    expect(describeChange(paired, change).detail).toBe('Was Passwords')
   })
 })

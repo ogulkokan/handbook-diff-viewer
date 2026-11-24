@@ -168,35 +168,33 @@ const positionText = computed(() =>
   <p v-if="isLoading" class="notice" role="status">The document is loading.</p>
   <p v-else-if="error" class="notice" role="alert">The document did not load. {{ error }}</p>
 
+  <!--
+    Three columns, in the order of the page: the outline, the text, the change list.
+    The order in the markup is the same, so the Tab key follows what the eye sees.
+  -->
   <div v-else-if="target && comparison" class="layout">
-    <!--
-      Two lists, each with its own scroll. On a wide window the outline is the left column and
-      the change list is the right column. On a narrow one they share the left panel.
-    -->
-    <div class="panel">
-      <nav class="panel__list panel__list--changes" aria-labelledby="changes-heading">
-        <h2 id="changes-heading" class="panel__heading">Changes</h2>
-        <p v-if="formattingCount > 0" class="panel__formatting">
-          {{ formattingText }}
-          <button
-            class="panel__toggle"
-            type="button"
-            :aria-pressed="showFormatting"
-            @click="showFormatting = !showFormatting"
-          >
-            Show formatting changes
-          </button>
-        </p>
-        <ChangeList :changes="changes" :comparison="comparison" />
-      </nav>
-      <nav ref="outline" class="panel__list panel__list--outline" aria-label="Outline">
-        <h2 class="panel__heading">Outline</h2>
-        <OutlineTree :nodes="target.children" :active-id="activeId" :counts="counts" />
-      </nav>
-    </div>
+    <nav ref="outline" class="side side--outline" aria-label="Outline">
+      <h2 class="side__heading">Outline</h2>
+      <OutlineTree :nodes="target.children" :active-id="activeId" :counts="counts" />
+    </nav>
     <main class="reading">
       <DocumentView :tree="tree" />
     </main>
+    <nav class="side side--changes" aria-labelledby="changes-heading">
+      <h2 id="changes-heading" class="side__heading">Changes</h2>
+      <p v-if="formattingCount > 0" class="side__formatting">
+        {{ formattingText }}
+        <button
+          class="side__toggle"
+          type="button"
+          :aria-pressed="showFormatting"
+          @click="showFormatting = !showFormatting"
+        >
+          Show formatting changes
+        </button>
+      </p>
+      <ChangeList :changes="changes" :comparison="comparison" />
+    </nav>
   </div>
 </template>
 
@@ -237,7 +235,7 @@ const positionText = computed(() =>
 
 .bar__field select,
 .bar__button,
-.panel__toggle {
+.side__toggle {
   padding: var(--space-1) var(--space-2);
   border: 1px solid var(--border-control);
   border-radius: var(--radius);
@@ -247,7 +245,7 @@ const positionText = computed(() =>
 }
 
 .bar__button,
-.panel__toggle {
+.side__toggle {
   cursor: pointer;
 }
 
@@ -259,7 +257,7 @@ const positionText = computed(() =>
 
 /* The pressed state has a filled background and a thicker edge, not only another colour. */
 .bar__button[aria-pressed='true'],
-.panel__toggle[aria-pressed='true'] {
+.side__toggle[aria-pressed='true'] {
   background: var(--neutral-bg);
   color: var(--neutral-text);
   box-shadow: inset 0 0 0 1px var(--border-control);
@@ -283,49 +281,35 @@ const positionText = computed(() =>
 
 .layout {
   display: grid;
-  grid-template-columns: var(--panel-width) minmax(0, 1fr);
+  /* The side columns get narrower on a small window, and the text keeps a readable width. */
+  grid-template-columns:
+    clamp(200px, 20vw, var(--panel-width))
+    minmax(0, 1fr)
+    clamp(240px, 26vw, var(--changes-width));
 }
 
-.panel {
+/* Each side column stays in view and scrolls by itself. */
+.side {
+  /* Sticky is a positioned value, so the hidden screen reader text inside scrolls and clips
+     with the list. Without a position, that text makes the page taller. */
   position: sticky;
   inset-block-start: var(--bar-height);
   align-self: start;
-  display: flex;
-  flex-direction: column;
   block-size: calc(100vh - var(--bar-height));
-  border-inline-end: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 0 var(--space-2) var(--space-2);
   font-size: var(--text-sm);
 }
 
-.panel__list {
-  /* Positioned, so that the hidden screen reader text inside scrolls and clips with the list.
-     Without this, that text keeps its place in the unscrolled list and makes the page taller. */
-  position: relative;
-  min-block-size: 0;
-  overflow-y: auto;
-  padding: 0 var(--space-2) var(--space-2);
+.side--outline {
+  border-inline-end: 1px solid var(--border);
 }
 
-.panel__list--changes {
-  flex: 0 1 auto;
-  max-block-size: 50%;
-  border-block-end: 1px solid var(--border);
+.side--changes {
+  border-inline-start: 1px solid var(--border);
 }
 
-.panel__list--outline {
-  flex: 1 1 0;
-}
-
-.panel__formatting {
-  margin: 0 var(--space-2) var(--space-2);
-  color: var(--muted);
-}
-
-.panel__toggle {
-  margin-block-start: var(--space-1);
-}
-
-.panel__heading {
+.side__heading {
   margin: var(--space-3) var(--space-2) var(--space-1);
   color: var(--muted);
   font-size: var(--text-sm);
@@ -334,50 +318,23 @@ const positionText = computed(() =>
   text-transform: uppercase;
 }
 
+.side__formatting {
+  margin: 0 var(--space-2) var(--space-2);
+  color: var(--muted);
+}
+
+.side__toggle {
+  margin-block-start: var(--space-1);
+}
+
 .reading {
   padding: var(--space-5) var(--space-6);
   /* Room below the last section, so that a jump can put it at the top like each other one. */
   padding-block-end: var(--end-room);
 }
 
-/* Room for three columns: the outline, the text and the change list. */
-@media (min-width: 1200px) {
-  .layout {
-    grid-template-columns: var(--panel-width) minmax(0, 1fr) var(--changes-width);
-  }
-
-  /* The panel gives its two lists to the grid, one for each side column. */
-  .panel {
-    display: contents;
-  }
-
-  .panel__list {
-    position: sticky;
-    inset-block-start: var(--bar-height);
-    align-self: start;
-    grid-row: 1;
-    block-size: calc(100vh - var(--bar-height));
-    max-block-size: none;
-  }
-
-  .panel__list--outline {
-    grid-column: 1;
-    border-inline-end: 1px solid var(--border);
-  }
-
-  .reading {
-    grid-column: 2;
-    grid-row: 1;
-  }
-
-  .panel__list--changes {
-    grid-column: 3;
-    border-block-end: 0;
-    border-inline-start: 1px solid var(--border);
-  }
-}
-
-/* Below three columns the controls of the top bar need two rows. tokens.css gives the height. */
+/* Below three columns of full width, the controls of the top bar need two rows.
+   tokens.css gives the height. */
 @media (max-width: 1199px) {
   .bar {
     flex-wrap: wrap;
@@ -387,7 +344,8 @@ const positionText = computed(() =>
   }
 }
 
-@media (max-width: 900px) {
+/* Too narrow for three columns: one column, in the order of the markup. */
+@media (max-width: 999px) {
   .bar {
     block-size: auto;
     min-block-size: var(--bar-height);
@@ -398,19 +356,13 @@ const positionText = computed(() =>
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .panel {
-    position: static;
+  .side {
+    position: relative;
+    inset-block-start: auto;
     block-size: auto;
-    border-inline-end: 0;
+    max-block-size: 40vh;
+    border-inline: 0;
     border-block-end: 1px solid var(--border);
-  }
-
-  .panel__list {
-    max-block-size: 30vh;
-  }
-
-  .panel__list--outline {
-    flex: none;
   }
 }
 </style>

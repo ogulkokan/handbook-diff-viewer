@@ -82,8 +82,11 @@ function partsChanged(parts: readonly string[]): string {
 
 function detailOf(comparison: Comparison, change: Change): string {
   switch (change.kind) {
-    case 'edited':
-      return partsChanged(change.edits.map((edit) => edit.part))
+    case 'edited': {
+      const what = partsChanged(change.edits.map((edit) => edit.part))
+      // The badge says "Formatting change". The detail must not read like a real edit.
+      return change.formatting ? `${what} in format only` : what
+    }
     case 'moved': {
       const from =
         change.fromParentId === null
