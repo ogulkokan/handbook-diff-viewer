@@ -7,12 +7,15 @@ Say what changed, not what was tried.
 
 ## Current focus
 
-- **Now:** The engine finds each change between two versions. No UI shows it yet.
-- **Prev:** Card 003, diff engine.
-- **Next:** Card 004, `docs/cards/004-show-changes.md`.
+- **Now:** A reader picks two versions and sees each change in the document, in a list and in the outline.
+- **Prev:** Card 004, show changes.
+- **Next:** Card 005, `docs/cards/005-safe-inline-markup.md`.
 - **Last updated:** 2026-11-24
 
 ## Log
+
+- **Card 004** (2026-11-24): two version pickers, a mark on each change, a change list that jumps, counts in the outline.
+  Formatting changes are hidden and counted. Light and dark colours pass a contrast test. 100 tests.
 
 - **Card 003** (2026-11-24): `diffDocuments` reports added, removed, edited, moved and reordered nodes in document order.
   Formatting changes have their own flag. `diffWords` marks the words that changed. Built test first, 50 tests.

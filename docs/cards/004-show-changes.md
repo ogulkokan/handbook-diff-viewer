@@ -57,7 +57,44 @@ This card joins the engine to the page. It serves US2, US3, US4 and US6.
 ## Handoff
 
 - **Gate:**
-- **Review:**
-- **Measured:**
+
+  | Step | Result | Detail |
+  |---|---|---|
+  | Type check | PASS | |
+  | Lint | PASS | |
+  | Format check | PASS | |
+  | Unit tests | PASS | 100 of 100 |
+  | Build | PASS | |
+  | Prose lint | PASS | 0 hard findings |
+
+- **Review:** approved. No Critical finding. Four Important findings, all fixed.
+  1. The contrast test did not hold each pair that the components use. Four pairs are added. All pass.
+  2. `TextChange.vue` computed the word comparison, against the rule "a component never computes a diff".
+     The engine now gives the changed words with the edit, and the component only renders them.
+  3. The text below a removed node had a line from CSS only, so a screen reader read it as current text.
+     Removed text is now a real `<del>` with the hidden word "Removed".
+  4. Raw sizes in components are tokens now.
+- **Measured:** in the browser at 1280 by 720 pixels, light and dark, unless a line says otherwise.
+  - A1: mount test. With version 2 as target, the base picker offers only version 1.
+  - A2: v2 to v3 shows "10 changes". v1 to v2 shows "12 changes" and "2 formatting changes are hidden."
+  - A3: each of the 7 badges has a glyph and a word. Removed text has a line, and added text is underlined.
+  - A4: each of the 12 entries of the change list for v1 to v2 jumps to its mark.
+    The mark is below the top bar and in view, and it has focus.
+  - A5: after "Show formatting changes", the summary says "14 changes", and both formatting changes show a mark.
+  - A6: 30 contrast tests. Each pair is 4.5 to 1 or more in both themes.
+  - A7: `cl-remote-coworking` shows "Draft" and "Added".
+  - A8: the UI checklist, rule by rule:
+    1 contrast PASS (test). 2 not colour alone PASS. 3 `<del>` and `<ins>` PASS. 4 focus ring PASS.
+    5 keyboard PASS for the pickers, the toggle and the links. 6 nothing hides the focus PASS.
+    7 semantic HTML PASS. 8 `aria-pressed` on the toggle PASS. 9 one live region PASS.
+    10 long values wrap PASS. 11 motion: only the smooth scroll, off with reduced motion. 12 scroll areas PASS.
+  - The console has no error after a fresh load, a change of versions and a jump.
 - **Not measured:**
+  - A screen reader. The `<del>`, `<ins>` and hidden words were checked in the DOM only.
+  - A width under 900 pixels with the comparison. Card 002 measured that layout without it.
 - **Left:**
+  - The side panel has two lists, each with its own scroll. With one scroll, the outline pushed the change list away.
+    `ui.md` rule 12 says so now.
+  - An edit of a paragraph holds `parts`: the words that differ. Card 005 changes them from text to tokens.
+  - `PresenceText.vue` wraps the text of a removed node in `<del>`.
+  - Vitest gives an empty string for an imported CSS file. The contrast test reads the file from disk.
