@@ -14,6 +14,9 @@ Say what changed, not what was tried.
 
 ## Log
 
+- **Card 010** (2026-11-24): a clause with fewer than 10 words of content never pairs as a rename.
+  The README names three known limits. 165 tests.
+
 - **Card 007** (2026-11-24): a clause that comes back under a new id shows as one change, "Replaced, likely renamed".
   Trello and Cursor stay a removal and an addition. 163 tests.
 

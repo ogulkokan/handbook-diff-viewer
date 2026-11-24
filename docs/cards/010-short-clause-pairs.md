@@ -44,8 +44,14 @@ If a version removes one of them and adds another, the app would say "Replaced, 
 
 ## Handoff
 
-- **Gate:**
+- **Gate:** each of the six steps passes. Unit tests: 165 of 165.
 - **Review:** not needed. The change is one condition with its test.
 - **Measured:**
+  - A1: unit test. Two tools with the values "Atlassian" and "Approved" stay removed and added.
+  - A2: the unit tests of card 007 still pass. The pair of the data has 28 words on each side.
+  - A3: the unit and mount tests still show 11 changes for v1 to v2, 10 for v2 to v3 and 20 for v1 to v3.
+  - A test for the limit itself: 10 equal words pair, and 9 do not.
 - **Not measured:**
+  - Other values for the limit. 10 is a choice, not a result of a study.
 - **Left:**
+  - The README has a part "Known limits" with three limits of the app.

@@ -81,6 +81,7 @@ The first step, before any code, was to compare the three files. Each row below 
 | `f-sec-access-cadence`, v2 to v3 | The field is removed | Removed leaf |
 | `sec-tools` | 40 clauses, and 5 status edits over two versions | Scale |
 | `sec-remote`, v2 | A new section with 3 clauses | Added subtree |
+| `sec-travel`, each version | A section inside another section | Nesting |
 
 [`docs/SPEC.md`](docs/SPEC.md) lists the expected changes for each comparison by node id. The tests take their expected values from that list.
 
@@ -182,7 +183,7 @@ Each card went through the same steps:
 5. A review by a read-only agent, [`.claude/agents/code-reviewer.md`](.claude/agents/code-reviewer.md). It reports only findings that it is sure of, each with the rule that is broken.
 6. A pull request with the acceptance table, the gate result and the review.
 
-The pull requests #1 to #8 have the record of each card.
+The pull requests #1 to #9 have the record of each card.
 
 ### Guardrails
 
@@ -225,13 +226,19 @@ For the card with the unsafe markup, the reviewer acted as an attacker who contr
 | Layout, focus, scrolling, themes | A check in a real browser for each card, recorded in the card |
 | Find-in-page | By hand |
 
-There are 163 unit tests. A test guards an acceptance criterion, an invariant or a bug that really happened, and its expected value comes from the data or from `docs/SPEC.md`.
+There are 165 unit tests. A test guards an acceptance criterion, an invariant or a bug that really happened, and its expected value comes from the data or from `docs/SPEC.md`.
 
 ## Not done and what I would do next
 
 ### Planned, not built
 
 - A browser test. Card 008 adds one Playwright test for the main path. Today the browser checks are done by hand.
+
+### Known limits
+
+- A clause that is removed in one section and comes back under a new id in another section does not pair. It shows as removed and added.
+- A clause with fewer than 10 words of content never pairs. Two tools with the same vendor and status are too alike to tell a rename from two tools.
+- The app always compares two versions. The oldest version cannot be read alone.
 
 ### Not measured
 
