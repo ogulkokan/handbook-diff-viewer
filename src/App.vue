@@ -9,6 +9,7 @@ import { parseUrlState, toSearch } from '@/composables/urlState'
 import { useChangeNavigation } from '@/composables/useChangeNavigation'
 import { useComparison } from '@/composables/useComparison'
 import { useCopyLink } from '@/composables/useCopyLink'
+import { useFolds } from '@/composables/useFolds'
 import { useScrollSpy } from '@/composables/useScrollSpy'
 import { useVersions } from '@/composables/useVersions'
 import type { ClauseNode, SectionNode } from '@/domain/types'
@@ -30,11 +31,14 @@ const {
   chooseTarget,
 } = useComparison(documents, parseUrlState(location.search))
 
-const { selectedId, position, count, hasNext, hasPrevious, next, previous } =
-  useChangeNavigation(changes)
+const { openFolds, setFoldOpen, reveal } = useFolds()
+const { selectedId, position, count, hasNext, hasPrevious, next, previous } = useChangeNavigation(
+  changes,
+  reveal,
+)
 const { message: copyMessage, copyLink } = useCopyLink()
 
-provideViewContext({ comparison, counts, changesOnly, selectedId })
+provideViewContext({ comparison, counts, changesOnly, selectedId, openFolds, setFoldOpen })
 
 // The address holds the comparison, so a copied link opens the same view (US7).
 // It is written only when the versions are there: before that, the state is not known.
@@ -82,9 +86,9 @@ const formattingText = computed(() => {
   const subject = n === 1 ? '1 formatting change is' : `${n} formatting changes are`
   return `${subject} ${showFormatting.value ? 'shown' : 'hidden'}.`
 })
-// "3 of 10" when the reader is at a change. The count alone is in the summary.
+// "Change 3 of 10" when the reader is at a change. A full phrase, for the live region.
 const positionText = computed(() =>
-  position.value === -1 ? '' : `${position.value + 1} of ${count.value}`,
+  position.value === -1 ? '' : `Change ${position.value + 1} of ${count.value}`,
 )
 </script>
 
@@ -144,10 +148,13 @@ const positionText = computed(() =>
 
       <!-- One polite live region: a new count or a new place is read as a full phrase. -->
       <p class="bar__summary" role="status">
-        <span v-if="positionText">{{ `${positionText} ` }}</span>
-        <strong v-else>{{ changeCountText }}</strong>
-        <!-- The space is part of the text, so a template formatter cannot drop it. -->
-        <span v-if="formattingCount > 0" class="sr-only">{{ ` ${formattingText}` }}</span>
+        <!-- At a change, the region says only where the reader is. -->
+        <span v-if="positionText">{{ positionText }}</span>
+        <template v-else>
+          <strong>{{ changeCountText }}</strong>
+          <!-- The space is part of the text, so a template formatter cannot drop it. -->
+          <span v-if="formattingCount > 0" class="sr-only">{{ ` ${formattingText}` }}</span>
+        </template>
       </p>
 
       <div class="bar__group">
@@ -327,7 +334,7 @@ const positionText = computed(() =>
 .reading {
   padding: var(--space-5) var(--space-6);
   /* Room below the last section, so that a jump can put it at the top like each other one. */
-  padding-block-end: 50vh;
+  padding-block-end: var(--end-room);
 }
 
 @media (max-width: 900px) {

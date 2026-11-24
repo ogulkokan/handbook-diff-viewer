@@ -167,12 +167,36 @@ describe('App: changes only (D10)', () => {
   it('says in each summary how many nodes the fold holds', async () => {
     const wrapper = await mountApp('/?only=1')
 
-    for (const fold of wrapper.get('#sec-tools').findAll('details')) {
-      const n = fold.findAll('article').length
-      expect(fold.get('summary').text()).toBe(
-        n === 1 ? '1 unchanged clause' : `${n} unchanged clauses`,
-      )
-    }
+    // data/v3.json: the edited clauses are numbers 22, 24, 26 and 32 of the 40 in sec-tools.
+    const summaries = wrapper.get('#sec-tools').findAll('details > summary')
+    expect(summaries.map((item) => item.text())).toEqual([
+      '21 unchanged clauses',
+      '1 unchanged clause',
+      '1 unchanged clause',
+      '5 unchanged clauses',
+      '8 unchanged clauses',
+    ])
+  })
+
+  it('shows each clause of an added section, with no fold', async () => {
+    // docs/SPEC.md row 14: v2 adds sec-remote with 3 clauses.
+    const wrapper = await mountApp('/?base=1&target=2&only=1')
+    const remote = wrapper.get('#sec-remote')
+
+    expect(remote.findAll('article')).toHaveLength(3)
+    expect(remote.find('details').exists()).toBe(false)
+  })
+
+  it('keeps a fold open when the reader opened it and the list renders again', async () => {
+    const wrapper = await mountApp('/?base=1&target=2&only=1')
+    const fold = () => wrapper.get('#cl-tool-slack').element.closest('details')!
+
+    fold().open = true
+    fold().dispatchEvent(new Event('toggle'))
+    // "Show formatting changes" gives a new tree, and each list renders again.
+    await button(wrapper, 'Show formatting changes').trigger('click')
+
+    expect(fold().open).toBe(true)
   })
 
   it('opens the fold around the target of a link in the outline', async () => {
@@ -192,14 +216,14 @@ describe('App: from change to change', () => {
     await button(wrapper, 'Next change').trigger('click')
 
     // docs/SPEC.md, in document order: sec-hours is the first change of v2 to v3.
-    expect(summary(wrapper)).toBe('1 of 10')
+    expect(summary(wrapper)).toBe('Change 1 of 10')
     expect(location.hash).toBe('#sec-hours')
     expect(document.activeElement?.id).toBe('sec-hours')
     expect(wrapper.get('#sec-hours').classes()).toContain('is-selected')
 
     await button(wrapper, 'Next change').trigger('click')
 
-    expect(summary(wrapper)).toBe('2 of 10')
+    expect(summary(wrapper)).toBe('Change 2 of 10')
     expect(location.hash).toBe('#p-travel-flights-1')
     expect(wrapper.get('#sec-hours').classes()).not.toContain('is-selected')
   })
@@ -210,7 +234,7 @@ describe('App: from change to change', () => {
     for (let n = 0; n < 10; n++) await button(wrapper, 'Next change').trigger('click')
 
     // The last change of v2 to v3 is the added clause in sec-remote.
-    expect(summary(wrapper)).toBe('10 of 10')
+    expect(summary(wrapper)).toBe('Change 10 of 10')
     expect(location.hash).toBe('#cl-remote-coworking')
     expect(button(wrapper, 'Next change').attributes('disabled')).toBeDefined()
   })
@@ -274,5 +298,51 @@ describe('App: the address holds the view (US7)', () => {
     await vi.waitFor(() =>
       expect(wrapper.get('header span[role="status"]').text()).toBe('The link is not copied.'),
     )
+  })
+})
+
+describe('App: the place of the reader', () => {
+  it('goes back with Previous change', async () => {
+    const wrapper = await mountApp()
+
+    await button(wrapper, 'Next change').trigger('click')
+    await button(wrapper, 'Next change').trigger('click')
+    await button(wrapper, 'Previous change').trigger('click')
+
+    expect(summary(wrapper)).toBe('Change 1 of 10')
+    expect(location.hash).toBe('#sec-hours')
+  })
+
+  it('goes on from a section that the address names, not from the top', async () => {
+    // docs/SPEC.md, v2 to v3 in document order: sec-security holds the fourth change,
+    // the removed field f-sec-access-cadence. The third one is before it, in sec-expenses.
+    const wrapper = await mountApp('/#sec-security')
+
+    expect(summary(wrapper)).toBe('10 changes')
+    await button(wrapper, 'Next change').trigger('click')
+    expect(location.hash).toBe('#f-sec-access-cadence')
+    expect(summary(wrapper)).toBe('Change 4 of 10')
+  })
+
+  it('goes back from such a section to the change before it', async () => {
+    const wrapper = await mountApp('/#sec-security')
+
+    await button(wrapper, 'Previous change').trigger('click')
+
+    expect(location.hash).toBe('#p-exp-reimbursement-1')
+    expect(summary(wrapper)).toBe('Change 3 of 10')
+  })
+
+  it('says the count again when another comparison has no change at the selected node', async () => {
+    const wrapper = await mountApp()
+    const [base, target] = wrapper.findAll<HTMLSelectElement>('header select')
+    await button(wrapper, 'Next change').trigger('click')
+    expect(summary(wrapper)).toBe('Change 1 of 10')
+
+    // sec-hours changes its title in v3 only. In v1 to v2 it is not a change.
+    await target!.setValue('2')
+    await base!.setValue('1')
+
+    expect(summary(wrapper)).toBe('12 changes 2 formatting changes are hidden.')
   })
 })

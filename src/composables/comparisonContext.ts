@@ -18,8 +18,11 @@ export interface ViewContext {
   counts: ComputedRef<ReadonlyMap<string, number>>
   /** True when runs of unchanged nodes show as folds (D10). */
   changesOnly: Ref<boolean>
-  /** The id of the change that the reader is at, or null. */
-  selectedId: Ref<string | null>
+  /** The id of the node that the reader is at, or null. */
+  selectedId: Readonly<Ref<string | null>>
+  /** The keys of the folds that are open. */
+  openFolds: Readonly<Ref<ReadonlySet<string>>>
+  setFoldOpen: (key: string, isOpen: boolean) => void
 }
 
 const KEY: InjectionKey<ViewContext> = Symbol('view')

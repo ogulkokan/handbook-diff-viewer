@@ -15,7 +15,13 @@ const { items, level } = defineProps<{
   level: number
 }>()
 
-const { changesOnly, counts } = useViewContext()
+const { changesOnly, counts, openFolds, setFoldOpen } = useViewContext()
+
+// The reader, the find-in-page of the browser and a jump can each open or close a fold.
+// The toggle event reports all three.
+function onToggle(key: string, event: Event): void {
+  if (event.currentTarget instanceof HTMLDetailsElement) setFoldOpen(key, event.currentTarget.open)
+}
 
 const entries = computed<Folded[]>(() =>
   changesOnly.value
@@ -40,7 +46,13 @@ const entries = computed<Folded[]>(() =>
       them (D10). The summary is plain text, not a heading: a heading there is lost to some
       screen readers.
     -->
-    <details v-if="entry.fold" class="fold">
+    <details
+      v-if="entry.fold"
+      class="fold"
+      :open="openFolds.has(entry.key)"
+      :data-fold="entry.key"
+      @toggle="onToggle(entry.key, $event)"
+    >
       <summary class="fold__summary">{{ entry.label }}</summary>
       <template v-for="item in entry.items" :key="item.node.id">
         <NodeSection v-if="item.node.type === 'section'" :item="item" :level="level" />

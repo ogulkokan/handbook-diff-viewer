@@ -55,7 +55,9 @@ a {
 }
 
 /* The change that the reader is at. The ring is not a focus ring: it stays when focus moves on. */
-.is-selected {
+/* The second selector beats the rule that takes the focus ring from a jump target. */
+.is-selected,
+.is-selected:focus {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
   border-radius: var(--radius);
