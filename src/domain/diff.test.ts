@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { diffDocuments, type Change, type ChangeKind } from './diff'
 import { v1, v2, v3 } from './fixtures'
+import { indexDocument } from './indexTree'
 
 // Every expected id below comes from "Expected changes" in docs/SPEC.md,
 // which was counted by hand from the three data files.
@@ -151,5 +152,111 @@ describe('diffDocuments: formatting changes (D5)', () => {
       'p-leave-sick-1',
     ])
     expect(edited(diffDocuments(v2, v3).changes, true)).toEqual([])
+  })
+})
+
+describe('diffDocuments: moved (D3)', () => {
+  it('v1 to v2: a clause under a new parent is one moved change', () => {
+    const changes = diffDocuments(v1, v2).changes
+
+    expect(idsOf(changes, 'moved')).toEqual(['cl-hours-holidays'])
+    expect(one(changes, 'cl-hours-holidays', 'moved')).toMatchObject({
+      fromParentId: 'sec-hours',
+      toParentId: 'sec-leave',
+    })
+  })
+
+  it('v1 to v2: the moved clause and its children are not added, removed or edited', () => {
+    const changes = diffDocuments(v1, v2).changes
+    const index = indexDocument(v1)
+    const family = index.order.filter(
+      (id) => id === 'cl-hours-holidays' || index.byId.get(id)?.parentId === 'cl-hours-holidays',
+    )
+
+    // The clause holds at least one child in the data, so the check is not empty.
+    expect(family.length).toBeGreaterThan(1)
+    const kinds = changes.filter((change) => family.includes(change.nodeId)).map((c) => c.kind)
+    expect(kinds).toEqual(['moved'])
+  })
+
+  it('v2 to v3: nothing moved', () => {
+    expect(idsOf(diffDocuments(v2, v3).changes, 'moved')).toEqual([])
+  })
+})
+
+describe('diffDocuments: reordered (D4)', () => {
+  it('v1 to v2: a swap of two clauses marks one node, not two', () => {
+    const reordered = idsOf(diffDocuments(v1, v2).changes, 'reordered')
+
+    expect(reordered).toHaveLength(1)
+    expect(['cl-comms-channels', 'cl-comms-meetings']).toContain(reordered[0])
+  })
+
+  it('v1 to v2: an added or removed sibling does not mark the nodes after it', () => {
+    // sec-tools loses cl-tool-trello and gains cl-tool-cursor. Its other 39 clauses keep their order.
+    const changes = diffDocuments(v1, v2).changes
+    const tools = indexDocument(v2)
+    const inTools = idsOf(changes, 'reordered').filter(
+      (id) => tools.byId.get(id)?.parentId === 'sec-tools',
+    )
+
+    expect(inTools).toEqual([])
+  })
+
+  it('v1 to v2: the node that moved away does not mark its earlier siblings', () => {
+    const hours = indexDocument(v2)
+    const inHours = idsOf(diffDocuments(v1, v2).changes, 'reordered').filter(
+      (id) => hours.byId.get(id)?.parentId === 'sec-hours',
+    )
+
+    expect(inHours).toEqual([])
+  })
+
+  it('v2 to v3: nothing reordered', () => {
+    expect(idsOf(diffDocuments(v2, v3).changes, 'reordered')).toEqual([])
+  })
+})
+
+describe('diffDocuments: any two versions (D2)', () => {
+  it('v1 to v3: the changes of both steps', () => {
+    const changes = diffDocuments(v1, v3).changes
+
+    expect(idsOf(changes, 'added').sort()).toEqual([
+      'cl-sec-credentials',
+      'cl-tool-cursor',
+      'sec-remote',
+    ])
+    // sec-remote now holds the clause that v3 added: 7 + 2 nodes.
+    expect(one(changes, 'sec-remote', 'added')).toMatchObject({ size: 9 })
+    expect(idsOf(changes, 'removed').sort()).toEqual([
+      'cl-sec-passwords',
+      'cl-tool-trello',
+      'f-sec-access-cadence',
+    ])
+    expect(idsOf(changes, 'moved')).toEqual(['cl-hours-holidays'])
+    expect(idsOf(changes, 'reordered')).toHaveLength(1)
+    expect(edited(changes, true)).toEqual(['f-exp-equipment-limit', 'p-leave-sick-1'])
+    // The 5 real edits of v1 to v2 and the 8 of v2 to v3.
+    expect(edited(changes, false)).toHaveLength(13)
+  })
+})
+
+describe('diffDocuments: document order', () => {
+  it('v2 to v3: lists the changes in the order of the target version', () => {
+    const changes = diffDocuments(v2, v3).changes
+    const order = indexDocument(v3).order
+    const inTarget = changes.filter((change) => change.kind !== 'removed').map((c) => c.nodeId)
+
+    expect(inTarget).toEqual([...inTarget].sort((a, b) => order.indexOf(a) - order.indexOf(b)))
+  })
+
+  it('v2 to v3: puts a removed field where it was, between its neighbours', () => {
+    const ids = diffDocuments(v2, v3).changes.map((change) => change.nodeId)
+
+    // sec-security comes after sec-expenses and before sec-tools.
+    expect(ids.indexOf('f-sec-access-cadence')).toBeGreaterThan(
+      ids.indexOf('p-exp-reimbursement-1'),
+    )
+    expect(ids.indexOf('f-sec-access-cadence')).toBeLessThan(ids.indexOf('f-tool-grammarly-status'))
   })
 })
