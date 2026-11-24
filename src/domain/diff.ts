@@ -1,4 +1,5 @@
 import { indexDocument, type DocumentIndex } from './indexTree'
+import { lcsPairs } from './lcs'
 import { isFormattingOnly } from './normalize'
 import type { DocNode, HandbookDocument, NodeType } from './types'
 
@@ -37,7 +38,16 @@ export interface EditedChange extends ChangeOf<'edited'> {
   formatting: boolean
 }
 
-export type Change = AddedChange | RemovedChange | EditedChange
+/** The node has the same id and another parent. It is one change, not a removal and an addition (D3). */
+export interface MovedChange extends ChangeOf<'moved'> {
+  /** null when the node was at the top of the document. */
+  fromParentId: string | null
+  toParentId: string | null
+}
+/** The node has the same parent and another place among the siblings that both versions share (D4). */
+export type ReorderedChange = ChangeOf<'reordered'>
+
+export type Change = AddedChange | RemovedChange | EditedChange | MovedChange | ReorderedChange
 
 export interface Comparison {
   base: HandbookDocument
@@ -109,6 +119,29 @@ export function diffDocuments(base: HandbookDocument, target: HandbookDocument):
   const targetChildren = childrenByParent(target)
   const changes: Change[] = []
 
+  // The fewest nodes that explain a new order: the siblings that both versions hold under one
+  // parent, minus a longest run that kept its order. A swap of two neighbours gives one node.
+  function reorderedIds(): Set<string> {
+    const result = new Set<string>()
+    for (const [parentId, children] of targetChildren) {
+      const stayed = (index: DocumentIndex) => (node: DocNode) =>
+        index.byId.get(node.id)?.parentId === parentId
+      const before = (baseChildren.get(parentId) ?? []).filter(stayed(targetIndex))
+      const after = children.filter(stayed(baseIndex))
+      const kept = new Set(
+        lcsPairs(
+          before.map((node) => node.id),
+          after.map((node) => node.id),
+        ).map(([, j]) => j),
+      )
+      after.forEach((node, j) => {
+        if (!kept.has(j)) result.add(node.id)
+      })
+    }
+    return result
+  }
+  const reordered = reorderedIds()
+
   // The children of one node as a reader of the comparison sees them: the target children in
   // their order, and each removed child after the sibling that came before it in the base.
   function mergedChildren(parentId: string | null): Array<{ node: DocNode; removed: boolean }> {
@@ -138,6 +171,15 @@ export function diffDocuments(base: HandbookDocument, target: HandbookDocument):
         changes.push({ kind: 'added', ...common, size: sizeOf(node) })
         continue
       }
+      if (earlier.parentId !== parentId) {
+        changes.push({
+          kind: 'moved',
+          ...common,
+          fromParentId: earlier.parentId,
+          toParentId: parentId,
+        })
+      }
+      if (reordered.has(node.id)) changes.push({ kind: 'reordered', ...common })
       const edits = editsBetween(earlier.node, node)
       if (edits.length > 0) {
         const formatting = edits.every((edit) => edit.formatting)
