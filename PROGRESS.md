@@ -7,12 +7,15 @@ Say what changed, not what was tried.
 
 ## Current focus
 
-- **Now:** A reader folds what did not change, steps from change to change, and shares a link to one.
-- **Prev:** Card 006, find changes.
-- **Next:** Card 009, `docs/cards/009-readme.md`. Cards 007 and 008 are stretch cards.
+- **Now:** The README says how to run the app, what was decided and what is not done.
+- **Prev:** Card 009, README.
+- **Next:** Card 007, `docs/cards/007-replaced-pairs.md`. Then the release. Card 008 is not built.
 - **Last updated:** 2026-11-24
 
 ## Log
+
+- **Card 009** (2026-11-24): the full README, with a screenshot and one line for each dependency.
+  It holds the questions with their assumptions, the method with an agent, and what is not done.
 
 - **Card 006** (2026-11-24): "Changes only" folds runs of unchanged nodes and keeps them in the page.
   Previous and Next change, the view in the address, and Copy link. 152 tests.
