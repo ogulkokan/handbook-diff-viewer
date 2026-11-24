@@ -58,7 +58,7 @@ With a boolean, only the two children whose value changed render again.
 - Use `mount`. Test what a reader sees, not how the component holds its state.
 - Find an element by its role or its text.
 - `await` each `trigger()` call.
-- happy-dom has no layout. It cannot check focus, scroll or styles. Use a browser for those.
+- jsdom has no layout. It cannot check focus, scroll or styles. Use a browser for those.
 
 ## VueUse is not a dependency
 
