@@ -1,6 +1,7 @@
 import { computed, ref, toValue, type MaybeRefOrGetter } from 'vue'
 
 import { diffDocuments } from '@/domain/diff'
+import { pairReplaced } from '@/domain/pairReplaced'
 import type { HandbookDocument } from '@/domain/types'
 import type { UrlState } from './urlState'
 import {
@@ -43,7 +44,7 @@ export function useComparison(
       baseOptions.value.at(-1),
   )
   const comparison = computed(() =>
-    target.value ? diffDocuments(base.value ?? target.value, target.value) : null,
+    target.value ? pairReplaced(diffDocuments(base.value ?? target.value, target.value)) : null,
   )
   const tree = computed(() => {
     if (!comparison.value) return []

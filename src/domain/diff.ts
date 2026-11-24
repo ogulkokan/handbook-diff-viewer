@@ -4,7 +4,7 @@ import { isFormattingOnly } from './normalize'
 import { diffInline, parseInline, type InlinePart } from './inline'
 import type { DocNode, HandbookDocument, NodeType } from './types'
 
-export type ChangeKind = 'added' | 'removed' | 'edited' | 'moved' | 'reordered'
+export type ChangeKind = 'added' | 'removed' | 'edited' | 'moved' | 'reordered' | 'replaced'
 
 /** The part of a node that an edit changes. */
 export type EditedPart = 'title' | 'label' | 'value' | 'text' | 'status'
@@ -39,6 +39,11 @@ export interface EditedChange extends ChangeOf<'edited'> {
   edits: Edit[]
   /** True when each edit of the node is a formatting change. */
   formatting: boolean
+  /**
+   * The id of a replaced node that this edit is inside. Such an edit shows what differs inside
+   * the pair. It is part of that one change and is not counted on its own.
+   */
+  partOf?: string
 }
 
 /** The node has the same id and another parent. It is one change, not a removal and an addition (D3). */
@@ -50,7 +55,19 @@ export interface MovedChange extends ChangeOf<'moved'> {
 /** The node has the same parent and another place among the siblings that both versions share (D4). */
 export type ReorderedChange = ChangeOf<'reordered'>
 
-export type Change = AddedChange | RemovedChange | EditedChange | MovedChange | ReorderedChange
+/**
+ * A removed node and an added node that are probably the same thing under a new id (D6).
+ * The schema says that a new id is a new node, so this is a guess, and the UI says "likely".
+ */
+export interface ReplacedChange extends ChangeOf<'replaced'> {
+  /** The id of the node in the base version. */
+  fromNodeId: string
+  /** What differs between the two nodes themselves, for example the title. */
+  edits: Edit[]
+}
+
+export type Change =
+  AddedChange | RemovedChange | EditedChange | MovedChange | ReorderedChange | ReplacedChange
 
 /** One node as the reader of a comparison sees it. */
 export interface ViewNode {
@@ -135,7 +152,8 @@ function partsOf(node: DocNode): Array<[EditedPart, string | undefined]> {
   }
 }
 
-function editsBetween(base: DocNode, target: DocNode): Edit[] {
+/** What differs between two nodes themselves: title, label, value, text or status. */
+export function editsBetween(base: DocNode, target: DocNode): Edit[] {
   const before = new Map(partsOf(base))
   const edits: Edit[] = []
   for (const [part, after] of partsOf(target)) {

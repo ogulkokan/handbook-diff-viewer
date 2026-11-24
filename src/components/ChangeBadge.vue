@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 
 export type BadgeKind =
-  'added' | 'removed' | 'edited' | 'moved' | 'reordered' | 'formatting' | 'draft'
+  'added' | 'removed' | 'edited' | 'moved' | 'reordered' | 'replaced' | 'formatting' | 'draft'
 
 const { kind, detail = '' } = defineProps<{
   kind: BadgeKind
@@ -17,6 +17,8 @@ const LOOK: Record<BadgeKind, { glyph: string; label: string; tone: string }> = 
   edited: { glyph: '~', label: 'Edited', tone: 'edited' },
   moved: { glyph: '→', label: 'Moved', tone: 'moved' },
   reordered: { glyph: '↕', label: 'Reordered', tone: 'moved' },
+  // "likely": the app guesses that two ids are one node (D6).
+  replaced: { glyph: '⇄', label: 'Replaced, likely renamed', tone: 'edited' },
   formatting: { glyph: '≈', label: 'Formatting change', tone: 'neutral' },
   draft: { glyph: '◌', label: 'Draft', tone: 'neutral' },
 }

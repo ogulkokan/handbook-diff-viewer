@@ -22,8 +22,15 @@ export function withoutFormattingChanges(tree: readonly ViewItem[]): ViewItem[] 
 /** The changes of a list of items and of all nodes below them, in document order. */
 export function changesIn(items: readonly ViewItem[]): Change[] {
   return items.flatMap((item) =>
-    item.kind === 'moved-away' ? [] : [...item.changes, ...changesIn(item.children)],
+    item.kind === 'moved-away'
+      ? []
+      : [...item.changes.filter(countsOnItsOwn), ...changesIn(item.children)],
   )
+}
+
+/** False for an edit inside a replaced node: it is part of that one change. */
+function countsOnItsOwn(change: Change): boolean {
+  return !(change.kind === 'edited' && change.partOf !== undefined)
 }
 
 /** For each node that holds a change itself or below it: the number of those changes. */
@@ -32,7 +39,7 @@ export function changeCounts(tree: readonly ViewItem[]): Map<string, number> {
   const visit = (items: readonly ViewItem[]): number =>
     items.reduce((sum, item) => {
       if (item.kind === 'moved-away') return sum
-      const count = item.changes.length + visit(item.children)
+      const count = item.changes.filter(countsOnItsOwn).length + visit(item.children)
       if (count > 0) counts.set(item.node.id, count)
       return sum + count
     }, 0)
@@ -71,7 +78,7 @@ export function describeChange(
 /** The edit of one part of a node, when its changes hold one. */
 export function editOf(changes: readonly Change[], part: Edit['part']): Edit | undefined {
   for (const change of changes) {
-    if (change.kind !== 'edited') continue
+    if (change.kind !== 'edited' && change.kind !== 'replaced') continue
     const edit = change.edits.find((candidate) => candidate.part === part)
     if (edit) return edit
   }

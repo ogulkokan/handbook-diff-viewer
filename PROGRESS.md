@@ -7,12 +7,15 @@ Say what changed, not what was tried.
 
 ## Current focus
 
-- **Now:** The README says how to run the app, what was decided and what is not done.
-- **Prev:** Card 009, README.
-- **Next:** Card 007, `docs/cards/007-replaced-pairs.md`. Then the release. Card 008 is not built.
+- **Now:** Each card but 008 is built. The app is ready for the release steps.
+- **Prev:** Card 007, replaced pairs.
+- **Next:** The release: a fresh clone, then one pull request from `develop` into `main`. Card 008 is not built.
 - **Last updated:** 2026-11-24
 
 ## Log
+
+- **Card 007** (2026-11-24): a clause that comes back under a new id shows as one change, "Replaced, likely renamed".
+  Trello and Cursor stay a removal and an addition. 163 tests.
 
 - **Card 009** (2026-11-24): the full README, with a screenshot and one line for each dependency.
   It holds the questions with their assumptions, the method with an agent, and what is not done.
