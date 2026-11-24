@@ -64,7 +64,7 @@ The order is the cut order from the bottom. If the time box ends, stop and list 
      The checks before the review ran on v2 to v3 only, which has no added section.
      A test names the bug, and the fold rule now needs a node to be in both versions.
   2. The ring of the selected change was off while that change had focus. A CSS rule with more weight won.
-  3. A3 was not run, and A4 was measured on v2 to v3. A4 is now measured on v1 to v3. A3 is with the owner.
+  3. A3 was not run, and A4 was measured on v2 to v3. A4 is now measured on v1 to v3, and the owner ran A3 by hand.
   4. Two tests built their expected fold labels from the output. They now name the five labels from the data.
   5. The status region said "3 of 10" with no noun, and it read the formatting sentence at each step.
      It now says "Change 3 of 10" and nothing else.
@@ -73,14 +73,16 @@ The order is the cut order from the bottom. If the time box ends, stop and list 
 - **Measured:** in the browser at 1280 by 720 pixels, dark theme, on v1 to v3 with "Changes only".
   - A1: `sec-tools` shows its changed clauses and folds of the others. `sec-remote` shows its 4 clauses and no fold.
   - A2: on v2 to v3 the folds of `sec-tools` say 21, 1, 1, 5 and 8 unchanged clauses. A mount test checks the five labels.
+  - A3: by hand, by the owner, in a desktop browser with the dark theme, on v2 to v3 with "Changes only".
+    Find-in-page for "Zoom Video" opened the fold "21 unchanged clauses" and marked the match.
+    No script can start find-in-page, so this check has no test.
   - A4: "Next change" reaches 21 changes in document order, from `f-intro-reviewed` to `sec-remote`.
   - A5: at each of the 21 steps the change is below the top bar, in view and has focus. Its ring is 2 pixels.
   - A6: mount test. An address with both versions, both switches and a node opens that view.
   - A7: mount tests. "Copy link" says "The link is copied." or "The link is not copied."
   - The top bar is one row of 48 pixels with no overflow. The console has no error.
 - **Not measured:**
-  - A3: find-in-page on a folded tool. The preview pane does not open find-in-page, and no script can start it.
-    The owner checks it by hand in a browser. Until then this criterion is NOT RUN.
+  - A3 in a second browser engine. One browser was checked.
   - A width under 900 pixels with the new controls.
   - A screen reader.
 - **Left:**

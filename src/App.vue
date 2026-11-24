@@ -305,7 +305,7 @@ const positionText = computed(() =>
 
 .panel__list--changes {
   flex: 0 1 auto;
-  max-block-size: 45%;
+  max-block-size: 50%;
   border-block-end: 1px solid var(--border);
 }
 
