@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
+import { useIsSelected } from '@/composables/comparisonContext'
 import type { ViewNode } from '@/domain/diff'
 import { editOf } from '@/domain/view'
 import NodeBadges from './NodeBadges.vue'
@@ -8,6 +9,8 @@ import PresenceText from './PresenceText.vue'
 import TextChange from './TextChange.vue'
 
 const { item } = defineProps<{ item: ViewNode }>()
+
+const selected = useIsSelected(() => item.node.id)
 
 const field = computed(() => {
   if (item.node.type !== 'field') throw new Error(`NodeField got a ${item.node.type}`)
@@ -18,7 +21,12 @@ const valueEdit = computed(() => editOf(item.changes, 'value'))
 </script>
 
 <template>
-  <div :id="field.id" class="row" :class="`row--${item.presence}`" tabindex="-1">
+  <div
+    :id="field.id"
+    class="row"
+    :class="[`row--${item.presence}`, { 'is-selected': selected }]"
+    tabindex="-1"
+  >
     <dt class="row__label">
       <PresenceText :presence="item.presence">
         <TextChange v-if="labelEdit" :before="labelEdit.before" :after="labelEdit.after" />

@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import { computed, useTemplateRef, watch } from 'vue'
+import { computed, useTemplateRef, watch, watchEffect } from 'vue'
 
 import ChangeList from '@/components/ChangeList.vue'
 import DocumentView from '@/components/DocumentView.vue'
 import OutlineTree from '@/components/OutlineTree.vue'
-import { provideComparison } from '@/composables/comparisonContext'
+import { provideViewContext } from '@/composables/comparisonContext'
+import { parseUrlState, toSearch } from '@/composables/urlState'
+import { useChangeNavigation } from '@/composables/useChangeNavigation'
 import { useComparison } from '@/composables/useComparison'
+import { useCopyLink } from '@/composables/useCopyLink'
 import { useScrollSpy } from '@/composables/useScrollSpy'
 import { useVersions } from '@/composables/useVersions'
 import type { ClauseNode, SectionNode } from '@/domain/types'
@@ -22,11 +25,29 @@ const {
   counts,
   formattingCount,
   showFormatting,
+  changesOnly,
   chooseBase,
   chooseTarget,
-} = useComparison(documents)
+} = useComparison(documents, parseUrlState(location.search))
 
-provideComparison(comparison)
+const { selectedId, position, count, hasNext, hasPrevious, next, previous } =
+  useChangeNavigation(changes)
+const { message: copyMessage, copyLink } = useCopyLink()
+
+provideViewContext({ comparison, counts, changesOnly, selectedId })
+
+// The address holds the comparison, so a copied link opens the same view (US7).
+// It is written only when the versions are there: before that, the state is not known.
+watchEffect(() => {
+  if (!target.value) return
+  const search = toSearch({
+    base: base.value?.version ?? null,
+    target: target.value.version,
+    changesOnly: changesOnly.value,
+    showFormatting: showFormatting.value,
+  })
+  history.replaceState(history.state, '', `${location.pathname}${search}${location.hash}`)
+})
 
 function sectionIds(nodes: ReadonlyArray<SectionNode | ClauseNode>): string[] {
   return nodes.flatMap((node) =>
@@ -57,10 +78,14 @@ const changeCountText = computed(() =>
   changes.value.length === 1 ? '1 change' : `${changes.value.length} changes`,
 )
 const formattingText = computed(() => {
-  const count = formattingCount.value
-  const subject = count === 1 ? '1 formatting change is' : `${count} formatting changes are`
+  const n = formattingCount.value
+  const subject = n === 1 ? '1 formatting change is' : `${n} formatting changes are`
   return `${subject} ${showFormatting.value ? 'shown' : 'hidden'}.`
 })
+// "3 of 10" when the reader is at a change. The count alone is in the summary.
+const positionText = computed(() =>
+  position.value === -1 ? '' : `${position.value + 1} of ${count.value}`,
+)
 </script>
 
 <template>
@@ -99,22 +124,37 @@ const formattingText = computed(() => {
         </label>
       </div>
 
-      <!-- One polite live region: a new count is read as a full phrase (ui.md rule 9). -->
+      <button
+        class="bar__button"
+        type="button"
+        :aria-pressed="changesOnly"
+        @click="changesOnly = !changesOnly"
+      >
+        Changes only
+      </button>
+
+      <div class="bar__group" role="group" aria-label="Move between changes">
+        <button class="bar__button" type="button" :disabled="!hasPrevious" @click="previous">
+          Previous change
+        </button>
+        <button class="bar__button" type="button" :disabled="!hasNext" @click="next">
+          Next change
+        </button>
+      </div>
+
+      <!-- One polite live region: a new count or a new place is read as a full phrase. -->
       <p class="bar__summary" role="status">
-        <strong>{{ changeCountText }}</strong>
+        <span v-if="positionText">{{ `${positionText} ` }}</span>
+        <strong v-else>{{ changeCountText }}</strong>
         <!-- The space is part of the text, so a template formatter cannot drop it. -->
-        <span v-if="formattingCount > 0">{{ ` ${formattingText}` }}</span>
+        <span v-if="formattingCount > 0" class="sr-only">{{ ` ${formattingText}` }}</span>
       </p>
 
-      <button
-        v-if="formattingCount > 0"
-        class="bar__toggle"
-        type="button"
-        :aria-pressed="showFormatting"
-        @click="showFormatting = !showFormatting"
-      >
-        Show formatting changes
-      </button>
+      <div class="bar__group">
+        <button class="bar__button" type="button" @click="copyLink">Copy link</button>
+        <!-- Outside the button, so the name of the button does not change. -->
+        <span class="bar__copied" role="status">{{ copyMessage }}</span>
+      </div>
     </template>
   </header>
 
@@ -126,6 +166,17 @@ const formattingText = computed(() => {
       <!-- Two lists, each with its own scroll: the change list stays in view while the outline moves. -->
       <nav class="panel__list panel__list--changes" aria-labelledby="changes-heading">
         <h2 id="changes-heading" class="panel__heading">Changes</h2>
+        <p v-if="formattingCount > 0" class="panel__formatting">
+          {{ formattingText }}
+          <button
+            class="panel__toggle"
+            type="button"
+            :aria-pressed="showFormatting"
+            @click="showFormatting = !showFormatting"
+          >
+            Show formatting changes
+          </button>
+        </p>
         <ChangeList :changes="changes" :comparison="comparison" />
       </nav>
       <nav ref="outline" class="panel__list panel__list--outline" aria-label="Outline">
@@ -175,7 +226,8 @@ const formattingText = computed(() => {
 }
 
 .bar__field select,
-.bar__toggle {
+.bar__button,
+.panel__toggle {
   padding: var(--space-1) var(--space-2);
   border: 1px solid var(--border-control);
   border-radius: var(--radius);
@@ -184,26 +236,35 @@ const formattingText = computed(() => {
   font: inherit;
 }
 
-.bar__summary {
-  margin: 0;
-  margin-inline-start: auto;
-  color: var(--muted);
-}
-
-.bar__summary strong {
-  color: var(--text);
-}
-
-.bar__toggle {
+.bar__button,
+.panel__toggle {
   cursor: pointer;
 }
 
+.bar__button:disabled {
+  border-color: var(--border);
+  color: var(--muted);
+  cursor: default;
+}
+
 /* The pressed state has a filled background and a thicker edge, not only another colour. */
-.bar__toggle[aria-pressed='true'] {
+.bar__button[aria-pressed='true'],
+.panel__toggle[aria-pressed='true'] {
   background: var(--neutral-bg);
   color: var(--neutral-text);
   box-shadow: inset 0 0 0 1px var(--border-control);
   font-weight: 600;
+}
+
+.bar__summary {
+  margin: 0;
+  margin-inline-start: auto;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.bar__copied {
+  color: var(--muted);
 }
 
 .notice {
@@ -227,6 +288,9 @@ const formattingText = computed(() => {
 }
 
 .panel__list {
+  /* Positioned, so that the hidden screen reader text inside scrolls and clips with the list.
+     Without this, that text keeps its place in the unscrolled list and makes the page taller. */
+  position: relative;
   min-block-size: 0;
   overflow-y: auto;
   padding: 0 var(--space-2) var(--space-2);
@@ -242,6 +306,15 @@ const formattingText = computed(() => {
   flex: 1 1 0;
 }
 
+.panel__formatting {
+  margin: 0 var(--space-2) var(--space-2);
+  color: var(--muted);
+}
+
+.panel__toggle {
+  margin-block-start: var(--space-1);
+}
+
 .panel__heading {
   margin: var(--space-3) var(--space-2) var(--space-1);
   color: var(--muted);
@@ -253,6 +326,8 @@ const formattingText = computed(() => {
 
 .reading {
   padding: var(--space-5) var(--space-6);
+  /* Room below the last section, so that a jump can put it at the top like each other one. */
+  padding-block-end: 50vh;
 }
 
 @media (max-width: 900px) {

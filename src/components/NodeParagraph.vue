@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
+import { useIsSelected } from '@/composables/comparisonContext'
 import type { ViewNode } from '@/domain/diff'
 import { parseInline } from '@/domain/inline'
 import { editOf } from '@/domain/view'
@@ -10,6 +11,8 @@ import PresenceText from './PresenceText.vue'
 import TextChange from './TextChange.vue'
 
 const { item } = defineProps<{ item: ViewNode }>()
+
+const selected = useIsSelected(() => item.node.id)
 
 const paragraph = computed(() => {
   if (item.node.type !== 'paragraph') throw new Error(`NodeParagraph got a ${item.node.type}`)
@@ -21,7 +24,12 @@ const tokens = computed(() => parseInline(paragraph.value.text))
 </script>
 
 <template>
-  <p :id="paragraph.id" class="text" :class="`text--${item.presence}`" tabindex="-1">
+  <p
+    :id="paragraph.id"
+    class="text"
+    :class="[`text--${item.presence}`, { 'is-selected': selected }]"
+    tabindex="-1"
+  >
     <PresenceText :presence="item.presence">
       <TextChange v-if="edit" :before="edit.before" :after="edit.after" :parts="edit.parts" />
       <InlineText v-else :tokens="tokens" />

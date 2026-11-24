@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
+import { useIsSelected } from '@/composables/comparisonContext'
 import type { MovedAwayMarker, ViewNode } from '@/domain/diff'
 import { editOf } from '@/domain/view'
 import ChangeBadge from './ChangeBadge.vue'
@@ -16,6 +17,8 @@ const { item, level } = defineProps<{
   /** The heading level of the title, from 3 to 6. */
   level: number
 }>()
+
+const selected = useIsSelected(() => item.node.id)
 
 const clause = computed(() => {
   if (item.node.type !== 'clause') throw new Error(`NodeClause got a ${item.node.type}`)
@@ -51,7 +54,7 @@ const blocks = computed<Block[]>(() => {
   <article
     :id="clause.id"
     class="clause"
-    :class="`clause--${item.presence}`"
+    :class="[`clause--${item.presence}`, { 'is-selected': selected }]"
     tabindex="-1"
     :aria-labelledby="`${clause.id}-title`"
   >

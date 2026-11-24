@@ -20,7 +20,15 @@ export function useScrollSpy(targetIds: MaybeRefOrGetter<readonly string[]>) {
             if (entry.isIntersecting) atMiddle.add(entry.target.id)
             else atMiddle.delete(entry.target.id)
           }
-          const current = ids.findLast((id) => atMiddle.has(id))
+          const current =
+            ids.findLast((id) => atMiddle.has(id)) ??
+            // Nothing crosses the line: the reader is in the space after a section.
+            // The section in view is then the last one that starts above the line.
+            // A section inside a closed fold has no box, so it does not count.
+            ids.findLast((id) => {
+              const box = document.getElementById(id)?.getBoundingClientRect()
+              return box !== undefined && box.height > 0 && box.top < window.innerHeight / 2
+            })
           if (current !== undefined) activeId.value = current
         },
         // A line across the middle of the viewport: one target crosses it at a time.

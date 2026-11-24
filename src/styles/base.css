@@ -53,3 +53,10 @@ a {
   white-space: nowrap;
   border: 0;
 }
+
+/* The change that the reader is at. The ring is not a focus ring: it stays when focus moves on. */
+.is-selected {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius);
+}

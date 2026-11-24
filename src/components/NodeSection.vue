@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
+import { useIsSelected } from '@/composables/comparisonContext'
 import type { ViewNode } from '@/domain/diff'
 import { editOf } from '@/domain/view'
-import MovedAwayNote from './MovedAwayNote.vue'
 import NodeBadges from './NodeBadges.vue'
-import NodeClause from './NodeClause.vue'
+import NodeList from './NodeList.vue'
 import PresenceText from './PresenceText.vue'
 import TextChange from './TextChange.vue'
 
@@ -20,6 +20,7 @@ const section = computed(() => {
   return item.node
 })
 const titleEdit = computed(() => editOf(item.changes, 'title'))
+const selected = useIsSelected(() => item.node.id)
 </script>
 
 <template>
@@ -27,7 +28,7 @@ const titleEdit = computed(() => editOf(item.changes, 'title'))
   <section
     :id="section.id"
     class="section"
-    :class="`section--${item.presence}`"
+    :class="[`section--${item.presence}`, { 'is-selected': selected }]"
     tabindex="-1"
     :aria-labelledby="`${section.id}-title`"
   >
@@ -39,14 +40,7 @@ const titleEdit = computed(() => editOf(item.changes, 'title'))
       <NodeBadges :changes="item.changes" />
     </component>
 
-    <template
-      v-for="child in item.children"
-      :key="child.kind === 'node' ? child.node.id : `marker-${child.node.id}`"
-    >
-      <MovedAwayNote v-if="child.kind === 'moved-away'" :marker="child" />
-      <NodeSection v-else-if="child.node.type === 'section'" :item="child" :level="level + 1" />
-      <NodeClause v-else :item="child" :level="level + 1" />
-    </template>
+    <NodeList :items="item.children" :level="level + 1" />
   </section>
 </template>
 
