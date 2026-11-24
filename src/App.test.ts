@@ -93,3 +93,41 @@ describe('App: a removed node', () => {
     expect(wrapper.find('#cl-sec-credentials del').exists()).toBe(false)
   })
 })
+
+describe('App: markup from the data (D7)', () => {
+  it('shows the right change count for v2 to v3, and the page holds no img element', async () => {
+    const wrapper = await mountApp()
+
+    // data/v3.json, p-exp-reimbursement-1 holds <img src="x" onerror="...">.
+    expect(wrapper.get('[role="status"]').text()).toBe('10 changes')
+    expect(wrapper.find('img').exists()).toBe(false)
+    expect(wrapper.html()).not.toContain('onerror')
+  })
+
+  it('renders the link of that paragraph as a real link, marked as added', async () => {
+    const wrapper = await mountApp()
+    const link = wrapper.get('#p-exp-reimbursement-1 ins a')
+
+    expect(link.text()).toBe('expenses portal')
+    expect(link.attributes('href')).toBe('https://intranet.example.com/expenses')
+    expect(link.attributes('rel')).toBe('noopener noreferrer')
+  })
+
+  it('renders the bold words of that paragraph as bold, with no mark', async () => {
+    const wrapper = await mountApp()
+
+    expect(wrapper.get('#p-exp-reimbursement-1 strong').text()).toBe('30 days')
+    expect(wrapper.find('#p-exp-reimbursement-1 del').exists()).toBe(false)
+  })
+
+  it('renders bold words in a paragraph that did not change', async () => {
+    const wrapper = await mountApp()
+    const [base, target] = wrapper.findAll<HTMLSelectElement>('header select')
+    await target!.setValue('2')
+    await base!.setValue('1')
+
+    // v1 and v2 hold the same text for this paragraph, with <b>30 days</b>.
+    expect(wrapper.get('#p-exp-reimbursement-1 strong').text()).toBe('30 days')
+    expect(wrapper.find('#p-exp-reimbursement-1 ins').exists()).toBe(false)
+  })
+})
